@@ -1,0 +1,394 @@
+================================================================================
+ROAD HAZARD INTELLIGENCE SYSTEM - COMPREHENSIVE CLASS IMBALANCE REPORT
+================================================================================
+Generated on: 2026-09-10
+Processed Directory: Datasets/processed/
+Inspected Datasets:
+  1. Datasets/processed/RDD2022/
+  2. Datasets/processed/FloodDET/
+  3. Datasets/processed/RoadworkCones/
+Status: Complete Read-Only Imbalance Analysis & Scientific Balancing Recommendations
+Ontology (Strictly 4 Target Classes):
+  Class 0: pothole
+  Class 1: road_crack
+  Class 2: waterlogging
+  Class 3: construction_barrier
+
+================================================================================
+1. TASK 1: INSPECT EACH PROCESSED DATASET
+================================================================================
+A. Dataset 1: RDD2022 (Potholes & Cracks)
+   - Total Images: 38,385
+     * Train Images: 26,869 (69.999%)
+     * Val Images:    5,758 (15.001%)
+     * Test Images:   5,758 (15.001%)
+   - Total Annotations: 55,006
+     * Train Annotations: 38,741 (70.43%)
+     * Val Annotations:    8,177 (14.87%)
+     * Test Annotations:   8,088 (14.70%)
+   - Background (Empty Label) Images: 14,618 (38.08% of RDD2022)
+     * Train Empty: 10,138 | Val Empty: 2,265 | Test Empty: 2,215
+
+B. Dataset 2: FloodDET (Waterlogging)
+   - Total Images: 294 (Cleaned of 6 val/test duplicates)
+     * Train Images: 100 (34.01%)
+     * Val Images:   100 (34.01%)
+     * Test Images:   94 (31.98%)
+   - Total Annotations: 293
+     * Train Annotations:  99 (33.79%)
+     * Val Annotations:   100 (34.13%)
+     * Test Annotations:   94 (32.08%)
+   - Background (Empty Label) Images: 1 (0.34% of FloodDET)
+     * Train Empty: 1 (Flood_13125.jpg) | Val Empty: 0 | Test Empty: 0
+
+C. Dataset 3: RoadworkCones (Construction Barriers)
+   - Total Images: 4,674
+     * Train Images: 2,440 (52.20%)
+     * Val Images:     431 ( 9.22%)
+     * Test Images:  1,803 (38.58%)
+   - Total Annotations: 28,589
+     * Train Annotations: 18,899 (66.11%)
+     * Val Annotations:    2,381 ( 8.33%)
+     * Test Annotations:   7,309 (25.56%)
+   - Background (Empty Label) Images: 2,528 (54.09% of RoadworkCones)
+     * Train Empty: 1,160 | Val Empty: 175 | Test Empty: 1,193
+
+D. Combined System-Wide Grand Totals:
+   - Total Processed Images: 43,353 images
+     * Train Images: 29,409 images (67.84%)
+     * Val Images:    6,289 images (14.51%)
+     * Test Images:   7,655 images (17.66%)
+   - Total Processed Annotations: 83,888 bounding boxes
+     * Train Annotations: 57,739 bounding boxes (68.83%)
+     * Val Annotations:   10,658 bounding boxes (12.71%)
+     * Test Annotations:  15,491 bounding boxes (18.47%)
+   - Total Background Images: 17,147 images (39.55% of all images)
+     * Train Background: 11,299 images (38.42% of train)
+     * Val Background:    2,440 images (38.80% of val)
+     * Test Background:   3,408 images (44.52% of test)
+
+================================================================================
+2. TASK 2: FINAL CLASS DISTRIBUTION
+================================================================================
+Note: Multi-class accounting rule strictly applied: images containing multiple classes
+are counted independently for each class they contain.
+
++----+----------------------+--------------+-----------------+--------------+-----------------+--------------+-----------------+-------------+----------------+---------------+----------------+
+| ID | Class Name           | Total Images | Total Instances | Train Images | Train Instances | Val Images   | Val Instances   | Test Images | Test Instances | % Total Inst. | % Train Inst.  |
++----+----------------------+--------------+-----------------+--------------+-----------------+--------------+-----------------+-------------+----------------+---------------+----------------+
+| 0  | pothole              |        3,674 |           6,544 |        2,599 |           4,628 |          544 |             965 |         531 |            951 |        7.801% |         8.015% |
+| 1  | road_crack           |       22,227 |          48,462 |       15,639 |          34,113 |        3,266 |           7,212 |       3,322 |          7,137 |       57.770% |        59.081% |
+| 2  | waterlogging         |          293 |             293 |           99 |              99 |          100 |             100 |          94 |             94 |        0.349% |         0.171% |
+| 3  | construction_barrier |        2,146 |          28,589 |        1,280 |          18,899 |          256 |           2,381 |         610 |          7,309 |       34.080% |        32.732% |
++----+----------------------+--------------+-----------------+--------------+-----------------+--------------+-----------------+-------------+----------------+---------------+----------------+
+| -- | TOTALS / SUMS        |      28,340* |          83,888 |      19,617* |          57,739 |       4,166* |          10,658 |      4,557* |         15,491 |      100.000% |       100.000% |
++----+----------------------+--------------+-----------------+--------------+-----------------+--------------+-----------------+-------------+----------------+---------------+----------------+
+* Sum of positive images across classes exceeds unique positive images (26,206 overall, 18,110 train)
+  because 2,134 images (1,507 in train) co-contain both pothole and road_crack.
+
+Key Takeaways:
+  - Class 1 (road_crack) contains the vast majority of both images (22,227) and instances (48,462).
+  - Class 3 (construction_barrier) has the second highest instances (28,589, 34.08%) despite
+    occupying only 2,146 positive images, due to high cluster density (cones/vertical panels).
+  - Class 0 (pothole) represents 7.80% of total instances and 8.02% of training instances.
+  - Class 2 (waterlogging) represents only 0.35% of total instances and 0.17% of training instances,
+    forming the primary bottleneck of the multi-hazard dataset.
+
+================================================================================
+3. TASK 3: MULTI-CLASS IMAGE ANALYSIS
+================================================================================
+A. System-Wide Multi-Class Distribution (All 43,353 images):
+   - Images with exactly 0 classes (pure background): 17,147 images (39.55%)
+   - Images with exactly 1 class:                      24,072 images (55.53%)
+   - Images with exactly 2 classes:                     2,134 images ( 4.92%)
+   - Images with exactly 3 classes:                         0 images ( 0.00%)
+   - Images with all 4 classes:                             0 images ( 0.00%)
+
+B. Class Combinations Observed (Overall):
+   1. ['road_crack'] only:                    20,093 images (46.35% of all images)
+   2. ['construction_barrier'] only:           2,146 images ( 4.95% of all images)
+   3. ['pothole', 'road_crack'] co-occurring:  2,134 images ( 4.92% of all images)
+   4. ['pothole'] only:                        1,540 images ( 3.55% of all images)
+   5. ['waterlogging'] only:                     293 images ( 0.68% of all images)
+
+C. Split-by-Split Multi-Class Breakdown:
+
+   - Training Split (29,409 images):
+     * 0 classes (empty):                     11,299 images (38.42%)
+     * 1 class:                               16,603 images (56.46%)
+       - road_crack only:                     14,132 images (48.05%)
+       - construction_barrier only:            1,280 images ( 4.35%)
+       - pothole only:                         1,092 images ( 3.71%)
+       - waterlogging only:                       99 images ( 0.34%)
+     * 2 classes [pothole, road_crack]:        1,507 images ( 5.12%)
+     * 3 classes / 4 classes:                      0 images ( 0.00%)
+
+   - Validation Split (6,289 images):
+     * 0 classes (empty):                      2,440 images (38.80%)
+     * 1 class:                                3,532 images (56.16%)
+       - road_crack only:                      2,949 images (46.89%)
+       - construction_barrier only:              256 images ( 4.07%)
+       - pothole only:                           227 images ( 3.61%)
+       - waterlogging only:                      100 images ( 1.59%)
+     * 2 classes [pothole, road_crack]:          317 images ( 5.04%)
+     * 3 classes / 4 classes:                      0 images ( 0.00%)
+
+   - Test Split (7,655 images):
+     * 0 classes (empty):                      3,408 images (44.52%)
+     * 1 class:                                3,937 images (51.43%)
+       - road_crack only:                      3,012 images (39.35%)
+       - construction_barrier only:              610 images ( 7.97%)
+       - pothole only:                           221 images ( 2.89%)
+       - waterlogging only:                       94 images ( 1.23%)
+     * 2 classes [pothole, road_crack]:          310 images ( 4.05%)
+     * 3 classes / 4 classes:                      0 images ( 0.00%)
+
+D. Architectural Explanation of 0 Multi-Source Co-occurrences:
+   - Co-occurrence occurs strictly between Class 0 (pothole) and Class 1 (road_crack) because
+     both hazards originate from RDD2022 road pavement inspection cameras.
+   - Zero images combine waterlogging or construction barriers with potholes or cracks because
+     FloodDET (monsoon urban flooding) and RoadworkCones (autonomous vehicle highway sensors)
+     were collected independently in different operational environments.
+
+================================================================================
+4. TASK 4: BOUNDING BOX DENSITY ANALYSIS
+================================================================================
+Box Density Metrics per Class:
+
+1. Class 0: pothole
+   - Overall Positive Images: 3,674 images | 6,544 instances
+     * Min boxes/image: 1
+     * Max boxes/image: 13
+     * Average boxes/positive image: 1.7812 boxes/image
+     * Average boxes/all 43,353 images: 0.1509 boxes/image
+   - Training Positive Images: 2,599 images | 4,628 instances
+     * Min boxes/image: 1 | Max boxes/image: 13
+     * Average boxes/positive train image: 1.7807 boxes/image
+     * Average boxes/all 29,409 train images: 0.1574 boxes/image
+
+2. Class 1: road_crack
+   - Overall Positive Images: 22,227 images | 48,462 instances
+     * Min boxes/image: 1
+     * Max boxes/image: 44
+     * Average boxes/positive image: 2.1803 boxes/image
+     * Average boxes/all 43,353 images: 1.1178 boxes/image
+   - Training Positive Images: 15,639 images | 34,113 instances
+     * Min boxes/image: 1 | Max boxes/image: 44
+     * Average boxes/positive train image: 2.1813 boxes/image
+     * Average boxes/all 29,409 train images: 1.1600 boxes/image
+
+3. Class 2: waterlogging
+   - Overall Positive Images: 293 images | 293 instances
+     * Min boxes/image: 1
+     * Max boxes/image: 1
+     * Average boxes/positive image: 1.0000 boxes/image
+     * Average boxes/all 43,353 images: 0.0068 boxes/image
+   - Training Positive Images: 99 images | 99 instances
+     * Min boxes/image: 1 | Max boxes/image: 1
+     * Average boxes/positive train image: 1.0000 boxes/image
+     * Average boxes/all 29,409 train images: 0.0034 boxes/image
+
+4. Class 3: construction_barrier
+   - Overall Positive Images: 2,146 images | 28,589 instances
+     * Min boxes/image: 1
+     * Max boxes/image: 48
+     * Average boxes/positive image: 13.3220 boxes/image
+     * Average boxes/all 43,353 images: 0.6594 boxes/image
+   - Training Positive Images: 1,280 images | 18,899 instances
+     * Min boxes/image: 1 | Max boxes/image: 48
+     * Average boxes/positive train image: 14.7648 boxes/image
+     * Average boxes/all 29,409 train images: 0.6426 boxes/image
+
+Summary Density Contrast:
+  - construction_barrier has an extraordinarily high density: 13.32 boxes per positive image
+    (14.76 in train) reaching up to 48 cones/panels along highway construction zones.
+  - waterlogging has the lowest density: exactly 1.00 box per positive image (flood zone polygon).
+  - road_crack and pothole exhibit moderate densities: 2.18 and 1.78 boxes per positive image.
+
+================================================================================
+5. TASK 5: CLASS IMBALANCE RATIOS
+================================================================================
+A. Overall Instance Imbalance Ratios (All Splits Combined, 83,888 total instances):
+   - Largest Class: Class 1 (road_crack) = 48,462 instances (57.77%)
+   - Smallest Class: Class 2 (waterlogging) = 293 instances (0.35%)
+   - Largest / Smallest Ratio (road_crack / waterlogging):           165.40 : 1
+   - Largest / pothole Ratio (road_crack / pothole):                  7.41 : 1
+   - Largest / construction_barrier (road_crack / barrier):           1.70 : 1
+   - construction_barrier / waterlogging Ratio:                       97.57 : 1
+   - pothole / waterlogging Ratio:                                    22.33 : 1
+
+B. Training-Only Instance Imbalance Ratios (STRICTLY Training Split, 57,739 instances):
+   - Largest Training Class: Class 1 (road_crack) = 34,113 instances (59.08%)
+   - Smallest Training Class: Class 2 (waterlogging) = 99 instances (0.17%)
+   - Training Largest / Smallest Ratio (road_crack / waterlogging): 344.58 : 1
+   - Training Largest / pothole Ratio (road_crack / pothole):          7.37 : 1
+   - Training Largest / construction_barrier (road_crack / barrier):   1.81 : 1
+   - Training construction_barrier / waterlogging Ratio:             190.90 : 1
+   - Training pothole / waterlogging Ratio:                           46.75 : 1
+
+C. Training-Only Image Imbalance Ratios (Positive Images, 18,110 positive images):
+   - Largest Class: Class 1 (road_crack) = 15,639 images
+   - Second:        Class 0 (pothole)    =  2,599 images
+   - Third:         Class 3 (barrier)    =  1,280 images
+   - Smallest:      Class 2 (waterlogging)=    99 images
+   - Training Image Largest / Smallest (road_crack / waterlogging): 157.97 : 1
+   - Training Image road_crack / construction_barrier:               12.22 : 1
+   - Training Image road_crack / pothole:                             6.02 : 1
+   - Training Image pothole / waterlogging:                          26.25 : 1
+   - Training Image construction_barrier / waterlogging:             12.93 : 1
+
+D. Critical Imbalance Observation:
+   The training instance ratio between road_crack and waterlogging (344.58 : 1) represents an
+   extreme long-tail imbalance. A vanilla YOLO detector trained on this data would suffer severe
+   gradient starvation on waterlogging, leading to zero-shot or near-zero recall for flood hazards.
+
+================================================================================
+6. TASK 6: DATASET CONTRIBUTION MATRIX
+================================================================================
+Each final hazard class is supported by its contributing processed dataset:
+
+1. Class 0: pothole
+   - Contributing Dataset: RDD2022 (Datasets/processed/RDD2022/)
+     * Contribution: 3,674 images (100.0%) / 6,544 instances (100.0%)
+     * Train: 2,599 images / 4,628 boxes
+     * Val:     544 images /   965 boxes
+     * Test:    531 images /   951 boxes
+   - FloodDET Contribution: 0 images / 0 boxes
+   - RoadworkCones Contribution: 0 images / 0 boxes
+
+2. Class 1: road_crack
+   - Contributing Dataset: RDD2022 (Datasets/processed/RDD2022/)
+     * Contribution: 22,227 images (100.0%) / 48,462 instances (100.0%)
+     * Train: 15,639 images / 34,113 boxes
+     * Val:    3,266 images /  7,212 boxes
+     * Test:   3,322 images /  7,137 boxes
+   - FloodDET Contribution: 0 images / 0 boxes
+   - RoadworkCones Contribution: 0 images / 0 boxes
+
+3. Class 2: waterlogging
+   - Contributing Dataset: FloodDET (Datasets/processed/FloodDET/)
+     * Contribution: 293 images (100.0%) / 293 instances (100.0%)
+     * Train:  99 images /  99 boxes
+     * Val:   100 images / 100 boxes
+     * Test:   94 images /  94 boxes
+   - RDD2022 Contribution: 0 images / 0 boxes
+   - RoadworkCones Contribution: 0 images / 0 boxes
+
+4. Class 3: construction_barrier
+   - Contributing Dataset: RoadworkCones (Datasets/processed/RoadworkCones/)
+     * Contribution: 2,146 images (100.0%) / 28,589 instances (100.0%)
+     * Train: 1,280 images / 18,899 boxes
+     * Val:     256 images /  2,381 boxes
+     * Test:    610 images /  7,309 boxes
+   - RDD2022 Contribution: 0 images / 0 boxes
+   - FloodDET Contribution: 0 images / 0 boxes
+
+Summary:
+  The multi-hazard ontology is currently an orthogonal composition of three specialized domain
+  datasets, with RDD2022 providing structural pavement defects (potholes/cracks), FloodDET
+  providing surface water hazards, and RoadworkCones providing temporary traffic control barriers.
+
+================================================================================
+7. TASK 7: DATASET QUALITY & INTEGRITY VERIFICATION
+================================================================================
+Exhaustive verification conducted across all 43,353 images and labels:
+
+1. Missing Image-Label Pairs:
+   - Exactly 0 missing files. Every single image across all 3 datasets has a matching .txt file.
+2. Orphan Labels:
+   - Exactly 0 orphan files. Every label file references an existing, valid image.
+3. Empty Labels (Background Images):
+   - Exactly 17,147 empty label files (0 bytes) exist:
+     * RDD2022: 14,618 images (10,138 train | 2,265 val | 2,215 test)
+     * RoadworkCones: 2,528 images (1,160 train | 175 val | 1,193 test)
+     * FloodDET: 1 image (1 train: Flood_13125.jpg | 0 val | 0 test)
+   - These background images are intentional and serve for false-positive suppression.
+4. Invalid Class IDs:
+   - Exactly 0 invalid IDs. All 83,888 bounding boxes strictly contain class IDs in {0, 1, 2, 3}.
+5. Coordinates Outside [0.0, 1.0]:
+   - Exactly 0 bounding boxes out of bounds. All normalized coordinates satisfy:
+     0.0 <= x_center <= 1.0, 0.0 <= y_center <= 1.0, 0.0 <= width <= 1.0, 0.0 <= height <= 1.0.
+6. Zero-Width or Zero-Height Boxes:
+   - Exactly 0 instances. All 83,888 boxes have width > 0.0 and height > 0.0.
+7. NaN or Inf Values:
+   - Exactly 0 instances detected.
+8. Label Formatting:
+   - Every single line across all 43,353 label files contains exactly 5 whitespace-separated values:
+     <class_id> <x_center> <y_center> <width> <height>.
+9. Image File Integrity:
+   - All 43,353 image files have non-zero file sizes and verified valid headers.
+10. Filename Collisions Across Datasets:
+    - Exactly 0 collisions. Filenames in RDD2022 use country prefixes ('Japan_XXXXXX.jpg', etc.),
+      FloodDET uses 'Flood_XXXXX.jpg', and RoadworkCones uses UUIDs ('camera_.../UUID.jpg').
+
+Overall Dataset Quality Status: 100% CLEAN AND VERIFIED (ZERO DEFECTS).
+
+================================================================================
+8. TASK 8: RECOMMEND BALANCING STRATEGY (STRICTLY TRAINING SPLIT)
+================================================================================
+The following evidence-based balancing recommendations are derived exclusively from the actual
+training distribution (29,409 images, 57,739 instances):
+
+1. Overrepresented Classes:
+   - Class 1 (road_crack): Represents 59.08% of all training instances (34,113 boxes) and 53.18%
+     of all training images (15,639 positive images). This class completely dominates loss gradients.
+   - Class 3 (construction_barrier): Represents 32.73% of training instances (18,899 boxes),
+     though concentrated in only 1,280 training images.
+
+2. Underrepresented Classes:
+   - Class 2 (waterlogging): Critically underrepresented. Contains only 99 training images and 99
+     training instances (0.17% of training instances).
+   - Class 0 (pothole): Moderately underrepresented. Contains 4,628 training instances (8.02%)
+     across 2,599 training images (relative to 34,113 crack instances).
+
+3. Controlled Downsampling Recommendation (HIGHLY APPROPRIATE):
+   - Problem: Training on all 15,639 crack images causes the model to optimize almost entirely
+     for crack detection at the expense of potholes and waterlogging. Furthermore, 11,299 empty
+     background images in train (38.4%) causes excessive background gradient suppression.
+   - Recommended Action:
+     * Preserve ALL 1,507 training images containing BOTH pothole and road_crack.
+     * Randomly downsample the 14,132 "crack-only" images to ~2,000–2,500 images.
+       Result: Total training crack images = ~3,500–4,000 images (~7,500–8,500 crack instances).
+     * Downsample the 11,299 background images to ~1,000 images (~10% background ratio, standard
+       for Ultralytics YOLO).
+
+4. Training-Time Augmentation Recommendation (HIGHLY APPROPRIATE):
+   - Problem: Waterlogging has only 99 training samples, leading to high risk of overfitting.
+   - Recommended Action:
+     * Apply aggressive training-time Mosaic (p=1.0) and MixUp (p=0.15–0.25).
+     * Random HSV jitter (hue=0.015, saturation=0.7, value=0.4) to simulate daylight, overcast,
+       dusk, and night flood scenarios.
+     * Scale jittering (0.5 to 1.5) and horizontal flip (p=0.5).
+     * Caution: Avoid vertical flips (flips sky/ground geometry unrealistically) and excessive
+       perspective shearing that distorts vertical construction panels.
+
+5. Oversampling & Copy-Paste Recommendation (HIGHLY APPROPRIATE):
+   - Problem: 99 waterlogging images will only appear once per epoch in standard sampling.
+   - Recommended Action:
+     * Instance-level Copy-Paste: Segment waterlogging surfaces from FloodDET and paste them onto
+       asphalt roads in RDD2022 images to synthesize realistic multi-hazard scenes.
+     * Dataset-Level Oversampling: Repeat/re-index the 99 waterlogging training images by a factor
+       of 8x–10x (or apply a custom weighted sampler) so the model encounters ~800–1,000 waterlogging
+       instances per epoch.
+     * Repeat pothole-only images (1,092 images) by 1.5x–2.0x.
+
+6. Additional Data Collection Recommendation (STRONGLY RECOMMENDED FOR PRODUCTION):
+   - Even with 10x oversampling, 99 unique images cannot capture the full environmental variance
+     of road waterlogging (reflection, puddle depth, urban vs highway, night glare).
+   - Collecting or sourcing 1,000–2,000 additional real-world road waterlogging/puddle images
+     (e.g., from rainy BDD100K driving sequences or open meteorological road databases) is the
+     most effective path to production-grade generalization.
+
+7. Suggested Target Balanced Training Distribution:
+   By applying controlled downsampling of majority cracks and 8x oversampling of waterlogging:
+   - Class 0 (pothole):              ~3,500 images | ~6,000 instances (~25% of training boxes)
+   - Class 1 (road_crack):           ~3,500 images | ~7,500 instances (~30% of training boxes)
+   - Class 2 (waterlogging):           ~800 images |   ~800 instances (~15% of training boxes)
+   - Class 3 (construction_barrier): ~1,280 images | ~10,000 instances* (~30% of training boxes)
+   - Background images:              ~1,000 images |        0 instances
+   - Total Balanced Training Set:   ~10,000 images | ~24,000 instances
+   (*Note: Barrier instances remain naturally clustered along work zones).
+
+================================================================================
+END OF REPORT
+================================================================================

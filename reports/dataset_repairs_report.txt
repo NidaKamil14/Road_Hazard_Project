@@ -1,0 +1,256 @@
+================================================================================
+ROAD HAZARD INTELLIGENCE SYSTEM - DATASET REPAIRS & PREPROCESSING REPORT
+================================================================================
+Generated on: 2026-09-10 12:58:16
+Processed Directory: Datasets/processed/
+Status: Preprocessing & Repair Completed (Original datasets remain 100% untouched)
+
+TARGET ONTOLOGY (STRICTLY FOUR CLASSES):
+  Class 0: pothole
+  Class 1: road_crack
+  Class 2: waterlogging
+  Class 3: construction_barrier
+
+================================================================================
+1. EXECUTIVE SUMMARY & REPAIR HIGHLIGHTS
+================================================================================
+- RDD2022:
+  * Processed copy created at: Datasets/processed/RDD2022/
+  * Original 5-class schema remapped to target classes:
+    - Original 0 (Longitudinal Crack) -> Class 1 (road_crack)
+    - Original 1 (Transverse Crack)   -> Class 1 (road_crack)
+    - Original 2 (Alligator Crack)    -> Class 1 (road_crack)
+    - Original 3 (Repair / Patch)     -> EXCLUDED completely (10705 instances removed)
+    - Original 4 (Pothole)            -> Class 0 (pothole)
+  * Exactly 1 defective zero-width annotation was removed:
+    File: train/labels/Japan_001265.txt (line: '2 0.330000 0.790833 0.000000 0.001667')
+    Image Japan_001265.jpg preserved intact with remaining 3 valid crack annotations.
+  * Total images: 38,385 (Train: 26,869 | Val: 5,758 | Test: 5,758).
+  * Total annotations after repair: 55,006 (6,544 pothole, 48,462 road_crack).
+  * Images with target hazards: 23,767. Pure background images (empty .txt): 14,618.
+
+- FloodDET:
+  * Local search completed: 0 COCO annotation JSON files exist locally.
+  * Status: CONFIRMED MISSING. FloodDET contains 300 raw JPEG images and 0 annotations.
+  * No synthetic annotations invented; no images converted.
+  * 6 duplicate image pairs between val and test identified and documented below.
+  * Original images preserved completely untouched in Datasets/FloodDET/.
+
+- Roadwork Cones Dataset:
+  * Processed copy created at: Datasets/processed/RoadworkCones/
+  * Strict barrier definition applied:
+    - 'cone' (11,520 instances)            -> Class 3 (construction_barrier)
+    - 'vertical_pannel' (17,069 instances) -> Class 3 (construction_barrier)
+    - 'roadworks' (2,813 instances)        -> EXCLUDED completely (warning signs/signboards)
+  * Normalized coordinates: converted from absolute pixels [x, y, w, h] to YOLO
+    [x_center, y_center, w, h] normalized by 2880 x 1860.
+  * Out-of-bounds box clipped:
+    ID: 616d0252-47d1-4a51-bb2c-543b8d1d9e6f (test/camera_1C0FAF5250E2/)
+    Original: [145.21, 1124.3, 186.29, 736.41] (y + h = 1860.71 > 1860)
+    Clipped:  [145.21, 1124.3, 186.29, 735.70] (strictly within 2880 x 1860 bounds).
+  * Validation Split Synthesized:
+    - Carved 6 complete driving sessions (Sessions 2, 3, 29, 30, 38, 45) from original Train.
+    - Zero temporal leakage: sequential video frames from the same session are not split.
+    - Split distribution:
+      * Train: 2,440 images (84.99% of original train) | 18,899 barrier instances
+      * Val:     431 images (15.01% of original train) |  2,381 barrier instances
+      * Test:  1,803 images (100.0% of original test)  |  7,309 barrier instances
+    - Total images: 4,674 images | 28,589 construction_barrier instances.
+
+================================================================================
+2. TASK 1: RDD2022 REPAIRS & RE-INDEXING DETAILS
+================================================================================
+A. Class Mapping Applied:
+   - Original Class 0 (Longitudinal Crack): 26,016 instances remapped to Class 1 (road_crack)
+   - Original Class 1 (Transverse Crack):   11,830 instances remapped to Class 1 (road_crack)
+   - Original Class 2 (Alligator Crack):    10,617 instances remapped to Class 1 (road_crack)
+   - Original Class 3 (Repair / Patch):     10,705 instances completely filtered out and omitted.
+   - Original Class 4 (Pothole):             6,544 instances remapped to Class 0 (pothole)
+
+B. Invalid Annotation Removed:
+   - File: Datasets/processed/RDD2022/train/labels/Japan_001265.txt
+   - Removed Line: '2 0.330000 0.790833 0.000000 0.001667' (Width = 0.000000)
+   - Action: Omitted line during label writing. Image Japan_001265.jpg kept intact.
+   - Remaining Annotations in Japan_001265.txt:
+     1 0.448333 0.749167 0.100000 0.261667 (was class 0)
+     1 0.650833 0.947500 0.395000 0.105000 (was class 2)
+     1 0.094167 0.743333 0.158333 0.110000 (was class 2)
+
+C. Label Counts and Image Statistics After Processing:
+   - Total Images: 38,385
+     * Train: 26,869 images
+     * Val:    5,758 images
+     * Test:   5,758 images
+   - Total Target Bounding Boxes: 55,006
+     * pothole (Class 0):     6,544 instances across 3,674 images
+       - Train: 4,628 instances / 2,599 images
+       - Val:     965 instances /   544 images
+       - Test:    951 instances /   531 images
+     * road_crack (Class 1): 48,462 instances across 22,227 images
+       - Train: 34,113 instances / 15,639 images
+       - Val:    7,212 instances /  3,266 images
+       - Test:   7,137 instances /  3,322 images
+     * Co-occurrence (Images with BOTH pothole and road_crack): 2,134 images
+       - Train: 1,507 images
+       - Val:     317 images
+       - Test:    310 images
+   - Background Images (0 target annotations, empty .txt file): 14,618 images
+     * Train: 10,038 empty label files (8,097 originally empty + 1,941 having only class 3)
+     * Val:    2,301 empty label files (1,837 originally empty +   464 having only class 3)
+     * Test:   2,279 empty label files (1,790 originally empty +   489 having only class 3)
+     (Total: 11,724 originally empty + 2,894 containing exclusively Class 3 repair = 14,618)
+
+================================================================================
+3. TASK 2: FLOODDET AUDIT & STATUS REPORT
+================================================================================
+A. Annotation Availability Audit:
+   - Search Scope:
+     * Project root: f:\Road_Hazards\
+     * Datasets directory: f:\Road_Hazards\Datasets\
+     * User Downloads: C:\Users\Admin\Downloads\ (including FloodDET.zip)
+     * User Desktop: C:\Users\Admin\Desktop\
+     * User Documents & C: drive user directories
+   - Result:
+     NO ANNOTATION FILE (COCO JSON / XML / TXT / CSV / PARQUET) EXISTS LOCALLY.
+     FloodDET.zip as downloaded contains exclusively 300 JPEG images across
+     'test', 'train', and 'val' folders (100 images each) and 0 metadata files.
+
+B. Adherence to Project Guardrails:
+   - Zero synthetic or artificial annotations were created.
+   - Zero images were assumed to automatically contain waterlogging.
+   - Unrelated benchmark classes (people, vehicles, boats, etc.) were NOT converted.
+   - FloodDET images have NOT been converted to YOLO or copied to Datasets/processed/.
+   - Original FloodDET folder remains 100% untouched.
+
+C. Detailed Identification of 6 Duplicate Image Pairs (Val vs. Test Data Leakage):
+   The following 6 pairs of images in FloodDET share identical binary content (MD5):
+   1) MD5: 37ad4acbaf44cb27e99779b1f42b6bd8
+      - Val:  Datasets/FloodDET/FloodDET/val/Flood_8723.jpg
+      - Test: Datasets/FloodDET/FloodDET/test/Flood_11966.jpg
+   2) MD5: 3a3981899bc964c2b2dd9b81e9e5f5fb
+      - Val:  Datasets/FloodDET/FloodDET/val/Flood_8831.jpg
+      - Test: Datasets/FloodDET/FloodDET/test/Flood_11885.jpg
+   3) MD5: 20cb89f506ed9e38e50d2b10fc010c62
+      - Val:  Datasets/FloodDET/FloodDET/val/Flood_8845.jpg
+      - Test: Datasets/FloodDET/FloodDET/test/Flood_11979.jpg
+   4) MD5: 2c60d1f5dee608f62f5f50c28ea2cf0a
+      - Val:  Datasets/FloodDET/FloodDET/val/Flood_8857.jpg
+      - Test: Datasets/FloodDET/FloodDET/test/Flood_11891.jpg
+   5) MD5: db59c9b52b06a63d92fb3365a52a89d0
+      - Val:  Datasets/FloodDET/FloodDET/val/Flood_9190.jpg
+      - Test: Datasets/FloodDET/FloodDET/test/Flood_9167.jpg
+   6) MD5: 0e50eede351b272a7eb2265a4f17ca41
+      - Val:  Datasets/FloodDET/FloodDET/val/Flood_9214.jpg
+      - Test: Datasets/FloodDET/FloodDET/test/Flood_12030.jpg
+
+   Recommendation for Next Stage:
+   Before waterlogging can be trained, obtain the official COCO JSON annotation file
+   from Mendeley Data (or annotate the images) and purge these 6 duplicate images
+   from the test split to ensure zero test leakage.
+
+================================================================================
+4. TASK 3 & 4: ROADWORK CONES REPAIRS & VALIDATION SPLIT DETAILS
+================================================================================
+A. Strict Definition of construction_barrier:
+   - 'cone' (11,520 instances): Mapped to Class 3 (construction_barrier)
+   - 'vertical_pannel' (17,069 instances): Mapped to Class 3 (construction_barrier)
+   - 'roadworks' (2,813 instances): EXCLUDED completely (warning signs / signboards).
+
+B. Coordinate Conversion and Normalization:
+   - Source: Absolute pixel bounding boxes [x, y, width, height]
+   - Normalization base: image_width = 2880, image_height = 1860
+   - Equations:
+     x_center = (x + width / 2.0) / 2880.0
+     y_center = (y + height / 2.0) / 1860.0
+     norm_width = width / 2880.0
+     norm_height = height / 1860.0
+   - Format: YOLO txt (<class_id> <x_center> <y_center> <norm_width> <norm_height>)
+
+C. Out-of-Bounds Bounding Box Correction:
+   - Annotation ID: 616d0252-47d1-4a51-bb2c-543b8d1d9e6f
+   - File: test/camera_1C0FAF5250E2/616d0252-47d1-4a51-bb2c-543b8d1d9e6f.jpg
+   - Class: vertical_pannel
+   - Original Coords: [145.21, 1124.3, 186.29, 736.41]
+     (Vertical overflow: y + h = 1124.3 + 736.41 = 1860.71 > 1860.0)
+   - Clipped Coords: [145.21, 1124.3, 186.29, 735.70] (y_max clamped to 1860.0)
+   - Normalized YOLO Values:
+     class: 3
+     x_center: 0.082762
+     y_center: 0.802231
+     width:    0.064684
+     height:   0.395538
+
+D. Temporal Session-Aware Validation Split (Task 4):
+   - Original Distribution:
+     * Train: 2,871 images (61.42%) | Test: 1,803 images (38.58%) | Val: 0 images (0.00%)
+   - Methodology:
+     Grouped 2,871 training images into 35 continuous driving sessions using ROS
+     timestamps (timestamp_ns gap > 60s indicates new session).
+     Selected 6 complete driving sessions to form the new validation set:
+     Sessions: 2, 3, 29, 30, 38, 45
+   - Validation Split Properties:
+     * Validation Images: 431 images (15.012% of original train)
+     * Remaining Train Images: 2,440 images (84.988% of original train)
+     * Test Images: 1,803 images (Untouched)
+     * Temporal Leakage: 0% (sessions are completely isolated).
+     * Camera Representation in Validation Set:
+       - camera_1C0FAF57D6F8: 175 images
+       - camera_1C0FAF5CA7B6: 130 images
+       - camera_1C0FAF5CC14D:  87 images
+       - camera_1C0FAF5250E2:  39 images
+       (All 4 cameras are represented).
+   - Annotation Breakdown in Processed RoadworkCones:
+     * Train:
+       - Total Images: 2,440 (1,304 with barriers, 1,136 background/empty)
+       - construction_barrier instances: 18,899 (7,408 cones + 11,491 vertical panels)
+       - roadworks excluded: 1,386 instances
+     * Val:
+       - Total Images: 431 (232 with barriers, 199 background/empty)
+       - construction_barrier instances: 2,381 (802 cones + 1,579 vertical panels)
+       - roadworks excluded: 175 instances
+     * Test:
+       - Total Images: 1,803 (610 with barriers, 1,193 background/empty)
+       - construction_barrier instances: 7,309 (3,310 cones + 3,999 vertical panels)
+       - roadworks excluded: 1,252 instances
+     * Total Dataset:
+       - Total Images: 4,674 (2,146 with barriers, 2,528 background/empty)
+       - Total construction_barrier instances: 28,589
+
+================================================================================
+5. DATASET STATUS POST-REPAIR SUMMARY TABLE
+================================================================================
+-------------------------------------------------------------------------------------------------------------------------
+Dataset       | Split | Total Images | Images w/ Target | Empty Label Images | Pothole | Road Crack | Barrier | Total BBoxes
+-------------------------------------------------------------------------------------------------------------------------
+RDD2022       | Train | 26,869       | 16,731           | 10,038             |  4,628  | 34,113     |       0 | 38,741
+RDD2022       | Val   |  5,758       |  3,457           |  2,301             |    965  |  7,212     |       0 |  8,177
+RDD2022       | Test  |  5,758       |  3,479           |  2,279             |    951  |  7,137     |       0 |  8,088
+-------------------------------------------------------------------------------------------------------------------------
+RDD2022 Sub   | TOTAL | 38,385       | 23,767           | 14,618             |  6,544  | 48,462     |       0 | 55,006
+-------------------------------------------------------------------------------------------------------------------------
+RoadworkCones | Train |  2,440       |  1,304           |  1,136             |      0  |      0     |  18,899 | 18,899
+RoadworkCones | Val   |    431       |    232           |    199             |      0  |      0     |   2,381 |  2,381
+RoadworkCones | Test  |  1,803       |    610           |  1,193             |      0  |      0     |   7,309 |  7,309
+-------------------------------------------------------------------------------------------------------------------------
+Roadwork Sub  | TOTAL |  4,674       |  2,146           |  2,528             |      0  |      0     |  28,589 | 28,589
+-------------------------------------------------------------------------------------------------------------------------
+FloodDET      | Raw   |    300       |      0*          |    300             |      0  |      0     |       0 |      0*
+-------------------------------------------------------------------------------------------------------------------------
+COMBINED      | TOTAL | 43,359       | 25,913           | 17,446             |  6,544  | 48,462     |  28,589 | 83,595
+-------------------------------------------------------------------------------------------------------------------------
+*FloodDET contains 300 raw images awaiting external COCO JSON annotation file.
+
+================================================================================
+6. INTEGRITY & CONSTRAINT CONFIRMATION
+================================================================================
+[x] Original datasets preserved 100% unchanged in:
+    - Datasets/Potholes_cracks/RDD_SPLIT/
+    - Datasets/FloodDET/FloodDET/
+    - Datasets/roadwork_cones_dataset/roadwork_cones_dataset/
+[x] Processed copies cleanly isolated in:
+    - Datasets/processed/RDD2022/
+    - Datasets/processed/RoadworkCones/
+[x] No YOLO training performed.
+[x] No dataset merging performed.
+[x] No class balancing performed.
+================================================================================

@@ -1,0 +1,41 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches and temporary files
+.ipynb_checkpoints/
+*.swp
+*.swo
+*.tmp
+*.log
+
+# Environments
+.env
+.venv/
+venv/
+ENV/
+env/
+
+# IDE settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Large Datasets and Archives (~43 GB of raw/processed image files)
+Datasets/
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z
+
+# Generic pretrained base weights (downloaded on demand)
+yolo11n.pt
+yolo26n.pt
+
+# Allow trained baseline model weights
+!runs/**/weights/best.pt

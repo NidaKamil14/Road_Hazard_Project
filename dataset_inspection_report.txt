@@ -1,0 +1,491 @@
+================================================================================
+ROAD HAZARD INTELLIGENCE SYSTEM - COMPREHENSIVE DATASET INSPECTION REPORT
+================================================================================
+Generated on: 2026-09-10
+Workspace: f:\Road_Hazards
+Status: Complete dataset inspection (Read-Only; no datasets modified or converted)
+
+================================================================================
+1. PROJECT CONSTRAINTS & TARGET ONTOLOGY
+================================================================================
+Target Classes (Strictly 4):
+  Class 0: pothole
+  Class 1: road_crack
+  Class 2: waterlogging
+  Class 3: construction_barrier
+
+Explicit Removals:
+  - road_debris: COMPLETELY REMOVED FROM PROJECT
+  - missing_manhole: COMPLETELY REMOVED FROM PROJECT
+
+Input Datasets Inspected:
+  1. RDD2022 (Located at: Datasets/Potholes_cracks/RDD_SPLIT)
+  2. FloodDET (Located at: Datasets/FloodDET/FloodDET)
+  3. Roadwork Cones Dataset (Located at: Datasets/roadwork_cones_dataset/roadwork_cones_dataset)
+
+Integrity Note:
+  All inspections conducted strictly read-only. Zero files modified, renamed,
+  moved, deleted, converted, merged, balanced, or augmented.
+
+================================================================================
+2. DATASET 1: RDD2022 (RDD_SPLIT)
+================================================================================
+1. Total Number of Images:
+   Total: 38,385 images
+   - Train: 26,869 images (69.999%)
+   - Val:    5,758 images (15.001%)
+   - Test:   5,758 images (15.001%)
+
+2. Folder Structure:
+   Datasets/Potholes_cracks/RDD_SPLIT/
+   ├── test/
+   │   ├── images/  (5,758 .jpg files)
+   │   └── labels/  (5,758 .txt files)
+   ├── train/
+   │   ├── images/  (26,869 .jpg files)
+   │   └── labels/  (26,869 .txt files)
+   └── val/
+       ├── images/  (5,758 .jpg files)
+       └── labels/  (5,758 .txt files)
+
+3. Annotation Format:
+   YOLO text format (.txt). One text file per image.
+   Format per line: <class_id> <x_center> <y_center> <width> <height>
+   Coordinates are normalized floating-point numbers in the range [0.0, 1.0].
+
+4. Original Class Names & Mapping:
+   Class IDs in text files: {0, 1, 2, 3, 4}
+   - Class 0: Longitudinal Crack (D00)
+              Average w=0.107, h=0.196, median w/h=0.556 (tall/vertical cracks)
+   - Class 1: Transverse Crack (D10)
+              Average w=0.300, h=0.057, median w/h=5.083 (wide/horizontal cracks)
+   - Class 2: Alligator Crack (D20)
+              Average w=0.385, h=0.263, median w/h=1.357 (mesh/interconnected cracks)
+   - Class 3: Repair / Patch (D30/Repair, sealed cracks, joint maintenance)
+              *Unrelated maintenance class - EXCLUDED from final 4 classes*
+   - Class 4: Pothole (D40)
+              Confirmed via visual crop analysis and multi-national presence
+              (Present across Czech, Norway, US, India, Japan, China).
+
+5. Number of Images Containing Each Original Class:
+   - Class 0 (Longitudinal): 13,548 images (Train: 9,457 | Val: 2,011 | Test: 2,080)
+   - Class 1 (Transverse):    7,709 images (Train: 5,433 | Val: 1,158 | Test: 1,118)
+   - Class 2 (Alligator):     8,412 images (Train: 5,976 | Val: 1,222 | Test: 1,214)
+   - Class 3 (Repair):        7,440 images (Train: 5,247 | Val: 1,093 | Test: 1,100)
+   - Class 4 (Pothole):       3,674 images (Train: 2,599 | Val:   544 | Test:   531)
+
+6. Number of Bounding-Box Annotations/Instances for Each Original Class:
+   - Class 0 (Longitudinal): 26,016 instances (Train: 18,201 | Val: 3,890 | Test: 3,925)
+   - Class 1 (Transverse):   11,830 instances (Train:  8,386 | Val: 1,769 | Test: 1,675)
+   - Class 2 (Alligator):    10,617 instances (Train:  7,527 | Val: 1,553 | Test: 1,537)
+   - Class 3 (Repair):       10,705 instances (Train:  7,554 | Val: 1,564 | Test: 1,587)
+   - Class 4 (Pothole):       6,544 instances (Train:  4,628 | Val:   965 | Test:   951)
+   Total instances across all 5 classes: 65,712 instances
+   - Train instances: 46,296
+   - Val instances:    9,741
+   - Test instances:   9,675
+
+7. Train / Validation / Test Split:
+   - Train: 26,869 images (69.999%), 46,296 instances
+   - Val:    5,758 images (15.001%),  9,741 instances
+   - Test:   5,758 images (15.001%),  9,675 instances
+   Split design aligns with standard 70% / 15% / 15% partition.
+
+8. Image Dimensions:
+   Exactly 10 unique resolutions exist across the 38,385 images:
+   1)  600 x 600:    13,016 images (33.91%) [Japan vehicle cameras]
+   2)  720 x 720:     7,706 images (20.08%) [India vehicle cameras]
+   3)  640 x 640:     4,805 images (12.52%) [US / Czech cameras]
+   4)  512 x 512:     4,378 images (11.41%) [China Drone imagery]
+   5) 4040 x 2035:    4,342 images (11.31%) [Norway high-res front cameras]
+   6) 3643 x 2041:    2,896 images ( 7.54%) [Norway cameras]
+   7) 3650 x 2044:      923 images ( 2.40%) [Norway cameras]
+   8) 1024 x 1024:      147 images ( 0.38%) [High-res drone / vehicle]
+   9)  540 x 540:       124 images ( 0.32%) [Low-res crops]
+  10) 1080 x 1080:       48 images ( 0.13%) [HD crops]
+
+9. Missing Annotation Files:
+   0 missing files. Every image across train, val, and test has a matching .txt file.
+
+10. Images Without Annotations (Empty Label Files / Background Images):
+    11,724 images (30.54% of dataset are pure background images with 0 annotations):
+    - Train empty images: 8,097 (30.14% of train)
+    - Val empty images:   1,837 (31.90% of val)
+    - Test empty images:  1,790 (31.09% of test)
+
+11. Corrupt / Unreadable Images:
+    0 corrupt images. All 38,385 JPEG files successfully opened and verified by PIL.
+
+12. Duplicate Filenames Across Splits:
+    0 duplicate filenames. All 38,385 filenames are globally unique across all splits.
+
+13. Duplicate Image Content:
+    1 exact binary duplicate pair detected:
+    - train/images/United_States_001623.jpg == train/images/United_States_003917.jpg
+    (Both reside within train; no train-test leakage).
+
+14. Annotation Problems:
+    - Zero/negative area: Exactly 1 bounding box has width=0.000000:
+      File: Datasets/Potholes_cracks/RDD_SPLIT/train/labels/Japan_001265.txt
+      Line: 2 0.330000 0.790833 0.000000 0.001667
+    - Out of bounds coordinates: 0 instances.
+    - NaN / Inf coordinates: 0 instances.
+    - Invalid column formatting: 0 instances.
+
+15. Other Preprocessing Issues:
+    - 30.54% background image ratio: standard for false-positive suppression,
+      but requires deliberate handling during YOLO data loading.
+    - Class 3 (Repair) contains 10,705 instances that must be filtered out.
+    - Significant resolution disparity (512x512 to 4040x2035) requires YOLO multi-scale
+      training or adaptive image letterboxing to prevent small crack degradation.
+
+================================================================================
+3. DATASET 2: FloodDET
+================================================================================
+1. Total Number of Images:
+   Total: 300 images
+   - Train: 100 images (33.33%)
+   - Val:   100 images (33.33%)
+   - Test:  100 images (33.33%)
+
+2. Folder Structure:
+   Datasets/FloodDET/
+   └── FloodDET/
+       ├── test/   (100 .jpg files, e.g., Flood_10855.jpg)
+       ├── train/  (100 .jpg files, e.g., Flood_12946.jpg)
+       └── val/    (100 .jpg files, e.g., Flood_12084.jpg)
+
+3. Annotation Format:
+   CRITICAL FINDING: NONE / MISSING.
+   No annotation files (.json, .xml, .txt, .csv, .parquet) exist anywhere within
+   the project directory or machine archive for FloodDET.
+
+4. Original Class Names:
+   - On local disk: 0 classes (no annotations present).
+   - In published benchmark (Mendeley Data / literature): FloodDET uses an MS COCO
+     schema with 45 classes (11 submersion levels for Person, Bicycle, Car, Bus,
+     plus a general 'Flood' class).
+
+5. Number of Images Containing Each Original Class:
+   0 annotated images currently available in the project.
+
+6. Number of Bounding-Box Annotations/Instances for Each Original Class:
+   0 bounding-box instances.
+
+7. Train / Validation / Test Split:
+   Raw image split only:
+   - Train: 100 images (33.33%)
+   - Val:   100 images (33.33%)
+   - Test:  100 images (33.33%)
+
+8. Image Dimensions:
+   Highly heterogeneous. 42 distinct resolutions across 300 images:
+   - Top resolution: 512 x 384    (84 images, 28.00%)
+   - 1920 x 1280:                  (59 images, 19.67%)
+   - 1707 x 1280:                  (53 images, 17.67%)
+   - 2274 x 1280:                  (33 images, 11.00%)
+   - 800 x 600:                    (19 images,  6.33%)
+   - Remaining 37 resolutions:     (52 images,  17.33%, ranging from 275x234 to 4288x2848)
+
+9. Missing Annotation Files:
+   300 / 300 images (100% of images lack annotation data).
+
+10. Images Without Annotations:
+    300 images (100% unannotated).
+
+11. Corrupt / Unreadable Images:
+    0 corrupt images. All 300 JPEG images pass full PIL decompression verification.
+
+12. Duplicate Filenames Across Splits:
+    0 duplicate filenames. All 300 filenames are distinct.
+
+13. Duplicate Image Content:
+    CRITICAL DATA LEAKAGE: 6 pairs of identical images exist across Val and Test:
+    1) val/Flood_8831.jpg == test/Flood_11885.jpg
+    2) val/Flood_8857.jpg == test/Flood_11891.jpg
+    3) val/Flood_8723.jpg == test/Flood_11966.jpg
+    4) val/Flood_8845.jpg == test/Flood_11979.jpg
+    5) val/Flood_9214.jpg == test/Flood_12030.jpg
+    6) val/Flood_12151.jpg has identical hash to test duplicate counterpart.
+
+14. Annotation Problems:
+    CRITICAL BLOCKER: Annotations are absent from disk.
+    Supervised bounding-box training for waterlogging cannot proceed without
+    importing the missing COCO annotation file or labeling the images.
+
+15. Other Preprocessing Issues:
+    - Sample size is critically small (300 images vs 38,385 in RDD and 4,674 in Cones).
+    - Even if fully annotated, 300 images represents less than 0.7% of total imagery.
+    - Extreme resolution variance (from 275px thumbnail to 4288px DSLR photo).
+
+================================================================================
+4. DATASET 3: ROADWORK CONES DATASET
+================================================================================
+1. Total Number of Images:
+   Total: 4,674 images
+   - Train: 2,871 images (61.42%)
+   - Test:  1,803 images (38.58%)
+   - Val:       0 images (0.00% - No validation split provided!)
+
+2. Folder Structure:
+   Datasets/roadwork_cones_dataset/roadwork_cones_dataset/
+   ├── annotations.parquet  (31,402 annotation rows)
+   ├── README.md
+   ├── train/
+   │   ├── camera_1C0FAF5250E2/  (854 images)
+   │   ├── camera_1C0FAF57D6F8/  (1,415 images)
+   │   ├── camera_1C0FAF5CA7B6/  (494 images)
+   │   └── camera_1C0FAF5CC14D/  (108 images)
+   └── test/
+       ├── camera_1C0FAF5250E2/  (570 images)
+       ├── camera_1C0FAF57D6F8/  (1,193 images)
+       ├── camera_1C0FAF5CA7B6/  (40 images)
+       └── camera_1C0FAF5CC14D/  (0 images - empty directory)
+
+3. Annotation Format:
+   Apache Parquet tabular format (annotations.parquet).
+   Columns:
+     - bbox_msg_id (string UUID)
+     - object_id (bigint tracking ID)
+     - label (string: 'cone', 'roadworks', 'vertical_pannel')
+     - bbox_coords (double[4]: [x, y, width, height] in ABSOLUTE PIXELS)
+     - timestamp_ns (bigint ROS timestamp)
+     - image_path (string: relative path, e.g. 'train/camera_.../uuid.jpg')
+
+4. Original Class Names:
+   Three classes:
+   1) 'cone': Standard traffic cones (orange/reflective channelizing cones).
+   2) 'vertical_pannel': Vertical guide panels / delineators with chevron/striping
+      and top hazard warning lamps.
+   3) 'roadworks': Roadwork warning signs / trailer-mounted arrow signboards.
+
+5. Number of Images Containing Each Original Class:
+   - cone:              969 images (Train: 661 | Test: 308)
+   - vertical_pannel: 1,320 images (Train: 1,018 | Test: 302)
+   - roadworks:       2,528 images (Train: 1,335 | Test: 1,193)
+   (Note: 143 images in train contain both cone and vertical_pannel).
+
+6. Number of Bounding-Box Annotations/Instances for Each Original Class:
+   - vertical_pannel: 17,069 instances (Train: 13,070 | Test: 3,999)
+   - cone:            11,520 instances (Train:  8,210 | Test: 3,310)
+   - roadworks:        2,813 instances (Train:  1,561 | Test: 1,252)
+   Total instances:   31,402 instances (Train: 22,841 | Test: 8,561)
+
+7. Train / Validation / Test Split:
+   - Train: 2,871 images (61.42%), 22,841 instances (72.74%)
+   - Val:       0 images ( 0.00%),      0 instances ( 0.00%)
+   - Test:  1,803 images (38.58%),  8,561 instances (27.26%)
+   *Warning: Completely lacks a validation split.*
+
+8. Image Dimensions:
+   100% of images (4,674 / 4,674) are exactly 2880 x 1860 pixels (aspect ratio 48:31).
+   (Note: The README description stated 1448x1080 sensor, but raw images are 2880x1860).
+
+9. Missing Annotation Files:
+   0 missing files. All annotations unified inside annotations.parquet.
+   All 4,674 unique image paths in parquet match disk images 100%.
+
+10. Images Without Annotations:
+    0 empty images. Every image on disk has at least 1 annotation in the parquet.
+
+11. Corrupt / Unreadable Images:
+    0 corrupt images. All 4,674 images successfully read and verified.
+
+12. Duplicate Filenames:
+    0 duplicate filenames. All 4,674 filenames are globally unique UUIDs.
+
+13. Duplicate Image Content:
+    0 duplicate image hashes. All images are distinct video frames.
+
+14. Annotation Problems:
+    - Out of bounds: Exactly 1 bounding box slightly exceeds the bottom edge:
+      ID: 616d0252-47d1-4a51-bb2c-543b8d1d9e6f
+      Path: test/camera_1C0FAF5250E2/616d0252-47d1-4a51-bb2c-543b8d1d9e6f.jpg
+      Class: vertical_pannel
+      Coords: [145.21, 1124.3, 186.29, 736.41] -> y + h = 1860.71 > 1860 (overflow by 0.71px).
+    - NaN / Inf coordinates: 0 instances.
+    - Zero / negative area: 0 instances.
+
+15. Other Preprocessing Issues:
+    - Missing validation split requires a session-aware split (cannot randomly split
+      due to sequential autonomous vehicle video frames causing temporal leakage).
+    - Absolute pixel coordinates [x, y, w, h] require normalization to YOLO format:
+      x_center = (x + w/2)/2880, y_center = (y + h/2)/1860, w = w/2880, h = h/1860.
+    - Extremely dense annotations: average 13.32 barrier instances per image.
+
+================================================================================
+5. CLASS MAPPING ANALYSIS
+================================================================================
+
+A. RDD2022:
+   - pothole:
+     Mapped strictly from Class 4 (D40: Pothole).
+     Empirically proven by cropping bounding boxes across US, India, Japan, and China
+     subsets, showing genuine pothole depressions.
+   - road_crack:
+     Combines all genuine crack distress classes:
+     - Class 0: Longitudinal Crack (D00)
+     - Class 1: Transverse Crack (D10)
+     - Class 2: Alligator Crack (D20)
+   - Excluded Class:
+     - Class 3: Repair / Patch (D30/Repair). Visual inspection confirms these are
+       road joint maintenance sealants, asphalt patches, and lane line maintenance.
+       Must NOT be included in pothole or road_crack.
+
+B. FloodDET:
+   - Target: waterlogging
+   - Status: The 300 provided images represent flood scenes, but no annotation file
+     is present in the workspace.
+   - Per requirements, unrelated classes (people, vehicles, boats) must NOT be converted
+     into waterlogging. When annotation file is acquired, only the primary flood /
+     waterlogged pavement segmentation/bounding boxes should be mapped to waterlogging.
+
+C. Roadwork Cones Dataset:
+   - Genuine Construction Barriers:
+     - 'cone' (11,520 instances): Traffic cones used as physical channeling barriers.
+     - 'vertical_pannel' (17,069 instances): MUTCD-standard vertical channelizers /
+       barricades with hazard striping.
+     -> Mapped to: construction_barrier (Strict Definition: 28,589 instances, 2,146 images).
+   - 'roadworks' (2,813 instances, 2,528 images):
+     Represents roadwork signs / warning boards.
+     - Strict barrier definition: EXCLUDE (it is a sign, not a physical barrier).
+     - Comprehensive hazard definition: INCLUDE (if user intends construction_barrier
+       to encompass all temporary roadwork hazard obstacles).
+     Both breakdowns are reported in full detail below.
+
+================================================================================
+6. FINAL FOUR CLASSES COMPREHENSIVE METRICS
+================================================================================
+
+Summary Table (Strict Barrier: cone + vertical_pannel):
+---------------------------------------------------------------------------------------------------------
+Class ID | Class Name           | Images Containing | Instances | Inst %  | Img %   | Avg Box/Img
+---------------------------------------------------------------------------------------------------------
+0        | pothole              |  3,674            |  6,544    |  7.83%  | 13.10%  | 1.78
+1        | road_crack           | 22,227            | 48,463    | 57.97%  | 79.25%  | 2.18
+2        | waterlogging         |      0*           |      0*   |  0.00%  |  0.00%  | 0.00
+3        | construction_barrier |  2,146            | 28,589    | 34.20%  |  7.65%  | 13.32
+---------------------------------------------------------------------------------------------------------
+TOTAL (Target Associations)     | 28,047            | 83,596    | 100.0%  | 100.0%  | 2.98
+Unique Annotated Images         | 25,913 images
+---------------------------------------------------------------------------------------------------------
+*Note: FloodDET contains 300 unannotated candidate images on disk.
+
+Summary Table (Comprehensive Barrier: cone + vertical_pannel + roadworks):
+---------------------------------------------------------------------------------------------------------
+Class ID | Class Name           | Images Containing | Instances | Inst %  | Img %   | Avg Box/Img
+---------------------------------------------------------------------------------------------------------
+0        | pothole              |  3,674            |  6,544    |  7.57%  | 12.02%  | 1.78
+1        | road_crack           | 22,227            | 48,463    | 56.09%  | 72.70%  | 2.18
+2        | waterlogging         |      0*           |      0*   |  0.00%  |  0.00%  | 0.00
+3        | construction_barrier |  4,674            | 31,402    | 36.34%  | 15.29%  | 6.72
+---------------------------------------------------------------------------------------------------------
+TOTAL (Target Associations)     | 30,575            | 86,409    | 100.0%  | 100.0%  | 2.83
+Unique Annotated Images         | 28,441 images
+---------------------------------------------------------------------------------------------------------
+
+1. Images Containing Each Class:
+   - pothole:              3,674 images
+   - road_crack:          22,227 images
+   - waterlogging:             0 annotated images (300 raw images)
+   - construction_barrier: 2,146 images (Strict) | 4,674 images (Comprehensive)
+
+2. Bounding-Box Instances for Each Class:
+   - pothole:              6,544 instances
+   - road_crack:          48,463 instances (26,016 Longitudinal + 11,830 Transverse + 10,617 Alligator)
+   - waterlogging:             0 instances
+   - construction_barrier: 28,589 instances (Strict) | 31,402 instances (Comprehensive)
+
+3. Percentage Distribution:
+   - Instances (Strict: 83,596 total):
+     pothole:               7.83%
+     road_crack:           57.97%
+     waterlogging:          0.00%
+     construction_barrier: 34.20%
+   - Instances (Comprehensive: 86,409 total):
+     pothole:               7.57%
+     road_crack:           56.09%
+     waterlogging:          0.00%
+     construction_barrier: 36.34%
+   - Image-Class Occurrences (Strict: 28,047 total):
+     pothole:              13.10%
+     road_crack:           79.25%
+     waterlogging:          0.00%
+     construction_barrier:  7.65%
+   - Image-Class Occurrences (Comprehensive: 30,575 total):
+     pothole:              12.02%
+     road_crack:           72.70%
+     waterlogging:          0.00%
+     construction_barrier: 15.29%
+
+4. Train / Validation / Test Distribution:
+   - pothole:
+     * Train: 4,628 instances (70.72%) | 2,599 images (70.74%)
+     * Val:     965 instances (14.75%) |   544 images (14.81%)
+     * Test:    951 instances (14.53%) |   531 images (14.45%)
+   - road_crack:
+     * Train: 34,114 instances (70.39%) | 15,639 images (70.36%)
+     * Val:    7,212 instances (14.88%) |  3,266 images (14.69%)
+     * Test:   7,137 instances (14.73%) |  3,322 images (14.95%)
+   - waterlogging:
+     * Train: 0 instances | 100 unannotated images
+     * Val:   0 instances | 100 unannotated images
+     * Test:  0 instances | 100 unannotated images
+   - construction_barrier (Strict: cone + vertical_pannel):
+     * Train: 21,280 instances (74.43%) | 1,536 images (71.57%)
+     * Val:        0 instances ( 0.00%) |     0 images ( 0.00%)
+     * Test:   7,309 instances (25.57%) |   610 images (28.43%)
+   - construction_barrier (Comprehensive: incl. roadworks):
+     * Train: 22,841 instances (72.74%) | 2,871 images (61.42%)
+     * Val:        0 instances ( 0.00%) |     0 images ( 0.00%)
+     * Test:   8,561 instances (27.26%) | 1,803 images (38.58%)
+
+5. Multi-Class Images:
+   - Multi-Class Images across the 4 Final Classes:
+     * Total: 2,134 images contain BOTH pothole and road_crack.
+       - Train: 1,507 images
+       - Val:     317 images
+       - Test:    310 images
+     * All other pair combinations (e.g. pothole + barrier): 0 images (isolated datasets).
+     * Multi-class percentage of target annotated imagery: 8.24% (Strict) | 7.50% (Comprehensive).
+   - Multi-Class Images within Original Datasets:
+     * RDD2022 (images with >1 original class): 11,317 images (Train: 8,002 | Val: 1,652 | Test: 1,663)
+     * Roadwork Cones (images with both cone and vertical_pannel): 143 images (all in Train)
+
+6. Class Imbalance Analysis:
+   - Extreme Category Deficit:
+     waterlogging currently has 0 annotated instances (infinite imbalance).
+   - Major Instance Imbalance:
+     road_crack (48,463) : pothole (6,544) = 7.41 : 1
+     road_crack (48,463) : construction_barrier strict (28,589) = 1.70 : 1
+     construction_barrier strict (28,589) : pothole (6,544) = 4.37 : 1
+   - Image Presence Imbalance:
+     road_crack is present in 22,227 images, whereas pothole is in only 3,674 images (6.05 : 1)
+     and construction_barrier (strict) is in only 2,146 images (10.36 : 1).
+   - Object Density Imbalance (Boxes per Image):
+     * construction_barrier (strict): 13.32 boxes/image (extremely dense clusters)
+     * road_crack: 2.18 boxes/image
+     * pothole: 1.78 boxes/image
+     * construction_barrier (comp): 6.72 boxes/image
+
+================================================================================
+7. CRITICAL ACTION ITEMS & RECOMMENDATIONS BEFORE DATASET CONVERSION
+================================================================================
+1. Resolve FloodDET Annotations:
+   The MS COCO annotation file for FloodDET must be acquired and placed in the project,
+   or the 300 flood images must be annotated for waterlogging before model training.
+2. Remove 6 Duplicate Images in FloodDET:
+   The 6 duplicate images shared across FloodDET Val and Test must be purged to
+   eliminate data leakage.
+3. Remove/Repair Defective Annotation in RDD2022:
+   Japan_001265.txt contains a zero-width box (width=0.0) that will trigger YOLO training
+   warnings or NaNs if unhandled.
+4. Correct Sub-pixel Overflow in Roadwork Cones:
+   Clip vertical coordinate of box 616d0252... to height 1860.0 to stay within image bounds.
+5. Synthesize Validation Split for Roadwork Cones:
+   Carve out ~15% of driving sessions from the train split to form a proper validation
+   set for construction barriers.
+6. Filter Out RDD Class 3 (Repair):
+   Ensure conversion scripts drop all Class 3 annotations so road repair patches
+   do not pollute crack or pothole detectors.
+================================================================================

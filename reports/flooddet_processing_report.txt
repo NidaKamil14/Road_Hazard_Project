@@ -1,0 +1,259 @@
+================================================================================
+ROAD HAZARD INTELLIGENCE SYSTEM - FLOODDET PREPROCESSING & YOLO CONVERSION REPORT
+================================================================================
+Generated on: 2026-09-10
+Processed Dataset Location: Datasets/processed/FloodDET/
+Source Dataset Location:    Datasets/FloodDET/FloodDET/ (100% UNTOUCHED)
+Source Annotations:         Datasets/FloodDET/annotations_source/
+Status: Complete Preprocessing, YOLO Conversion, Validation, and Visualization
+
+================================================================================
+1. EXECUTIVE SUMMARY & TARGET ONTOLOGY
+================================================================================
+Target Hazard Ontology (Strictly 4 Classes):
+  Class 0: pothole
+  Class 1: road_crack
+  Class 2: waterlogging               <-- Assigned to FloodDET 'flood'
+  Class 3: construction_barrier
+
+Conversion Scope:
+  - Source Annotation Schema: Official MS COCO JSON format from FloodDET Version 1.
+  - Class Mapping Applied:
+    * Category 45 ('flood') -> Class 2 (waterlogging).
+    * Excluded Classes: All 44 reference object categories (person levels 0-10,
+      bicycle levels 0-10, car levels 0-10, bus levels 0-10) were completely excluded.
+  - Negative Control Sample:
+    * Flood_13125.jpg (contains only car_level_0, no flood surface) preserved as a
+      negative/background sample with an empty label file (Flood_13125.txt).
+  - Test Set Deduplication:
+    * The 6 exact binary duplicate images between val and test were purged from the
+      processed test set (images/test/ and labels/test/) to prevent data leakage.
+  - Boundary Overflows:
+    * 24 minor 1-2 pixel coordinate boundary overflows in Category 45 were clamped
+      to strict image bounds [0, width] / [0, height] before YOLO normalization.
+
+================================================================================
+2. SOURCE & PROCESSED DATASET COUNTS
+================================================================================
+Source Annotation Version:
+  - Dataset: FloodDET Version 1 (Mendeley Data DOI: 10.17632/px48m7vwvf.1)
+  - Contributor: Gautam Singha, Indian Institute of Technology Guwahati
+  - Annotation Files:
+    * Datasets/FloodDET/annotations_source/train.json (67,277,927 bytes)
+    * Datasets/FloodDET/annotations_source/val.json   (13,135,415 bytes)
+    * Datasets/FloodDET/annotations_source/test.json  (9,239,572 bytes)
+
+Source Images:
+  - Train: 100 images (100.0% matched in train.json)
+  - Val:   100 images (100.0% matched in val.json)
+  - Test:  100 images (100.0% matched in test.json)
+  - Total: 300 images (100.0% matched, 0 unmatched images)
+
+Processed Dataset Structure:
+  Datasets/processed/FloodDET/
+  ├── images/
+  │   ├── train/  (100 .jpg files)
+  │   ├── val/    (100 .jpg files)
+  │   └── test/   ( 94 .jpg files - 6 duplicates removed)
+  ├── labels/
+  │   ├── train/  (100 .txt files)
+  │   ├── val/    (100 .txt files)
+  │   └── test/   ( 94 .txt files - 6 duplicates removed)
+  └── visualization/ (20 sample .jpg images with drawn YOLO waterlogging boxes)
+
+Final Processed Counts:
+  - Train Split:
+    * Images: 100 (Positive: 99, Negative: 1)
+    * Labels: 100
+    * Annotations (Class 2): 99
+  - Val Split:
+    * Images: 100 (Positive: 100, Negative: 0)
+    * Labels: 100
+    * Annotations (Class 2): 100
+  - Test Split:
+    * Images: 94  (Positive: 94, Negative: 0)
+    * Labels: 94
+    * Annotations (Class 2): 94
+  - TOTAL:
+    * Images: 294
+    * Labels: 294
+    * Annotations (Class 2): 293
+
+================================================================================
+3. CLASS MAPPING & ANNOTATION FILTERING
+================================================================================
+Included Category:
+  - COCO category_id 45 ('flood', supercategory 'flood') -> YOLO Class 2 ('waterlogging')
+  - Total Target Annotations: 293 bounding boxes in processed dataset.
+
+Excluded Benchmark Categories (Total: 357 non-flood instances excluded):
+  - Category  1 (person_level_0):  64 instances (EXCLUDED)
+  - Category  2 (person_level_1):   1 instances (EXCLUDED)
+  - Category  3 (person_level_2):   3 instances (EXCLUDED)
+  - Category  4 (person_level_3):  24 instances (EXCLUDED)
+  - Category  5 (person_level_4):  18 instances (EXCLUDED)
+  - Category  6 (person_level_5):   9 instances (EXCLUDED)
+  - Category  7 (person_level_6):  18 instances (EXCLUDED)
+  - Category  8 (person_level_7):   1 instances (EXCLUDED)
+  - Category 15 (bicycle_level_3):  2 instances (EXCLUDED)
+  - Category 16 (bicycle_level_4):  1 instances (EXCLUDED)
+  - Category 18 (bicycle_level_6):  2 instances (EXCLUDED)
+  - Category 23 (car_level_0):     79 instances (EXCLUDED)
+  - Category 24 (car_level_1):      1 instances (EXCLUDED)
+  - Category 25 (car_level_2):     22 instances (EXCLUDED)
+  - Category 26 (car_level_3):     37 instances (EXCLUDED)
+  - Category 27 (car_level_4):     36 instances (EXCLUDED)
+  - Category 28 (car_level_5):      7 instances (EXCLUDED)
+  - Category 29 (car_level_6):     24 instances (EXCLUDED)
+  - Category 30 (car_level_7):      4 instances (EXCLUDED)
+  - Category 31 (car_level_8):      3 instances (EXCLUDED)
+  - Category 32 (car_level_9):      1 instances (EXCLUDED)
+
+Integrity Note:
+  Under no circumstances were people, cars, bicycles, or buses converted to waterlogging.
+  Only pure accumulated water/flood surfaces were retained.
+
+================================================================================
+4. NEGATIVE SAMPLE PRESERVATION
+================================================================================
+Image: Flood_13125.jpg
+  - Split: train
+  - Image ID: 2250
+  - Resolution: 512 x 384
+  - COCO Ground Truth: Contains 3 instances of car_level_0 and 0 flood annotations.
+  - Action Taken:
+    * Copied into Datasets/processed/FloodDET/images/train/Flood_13125.jpg
+    * Created empty label file Datasets/processed/FloodDET/labels/train/Flood_13125.txt (0 bytes)
+  - Function: Serves as an essential negative control background sample for YOLO training,
+    helping suppress false-positive waterlogging detections on dry road surfaces.
+
+================================================================================
+5. BOUNDARY CLAMPING & COORDINATE CORRECTION
+================================================================================
+Procedure Applied to all Category 45 bounding boxes:
+  1. clamped_x_min = max(0.0, min(x_min, image_width))
+  2. clamped_y_min = max(0.0, min(y_min, image_height))
+  3. clamped_x_max = max(0.0, min(x_min + width, image_width))
+  4. clamped_y_max = max(0.0, min(y_min + height, image_height))
+  5. new_width  = clamped_x_max - clamped_x_min
+  6. new_height = clamped_y_max - clamped_y_min
+  7. x_center = (clamped_x_min + new_width / 2.0) / image_width
+  8. y_center = (clamped_y_min + new_height / 2.0) / image_height
+  9. norm_width  = new_width / image_width
+ 10. norm_height = new_height / image_height
+
+Clamping Statistics:
+  - Total Category 45 boxes clamped across initial 300 images: 24
+    * Train:  3 boxes clamped
+    * Val:   10 boxes clamped
+    * Test:  11 boxes clamped in processed test set (2 additional duplicate boxes purged)
+  - All 24 clamped coordinates were minor 1-2 pixel polygon boundary artifacts at image borders.
+  - Zero zero-area or inverted boxes were created.
+  - All resulting normalized coordinates are strictly within [0.0, 1.0].
+
+================================================================================
+6. TEST DUPLICATE PURGE & DATA LEAKAGE RESOLUTION
+================================================================================
+The following 6 duplicate test images and their labels were permanently removed from
+Datasets/processed/FloodDET/ (while leaving the original raw dataset 100% untouched):
+
+1. File: Flood_11966.jpg (and Flood_11966.txt)
+   - Status: Removed from processed test/
+   - Reason: Exact binary duplicate of val/Flood_8723.jpg (MD5: 37ad4acbaf44cb27e99779b1f42b6bd8)
+2. File: Flood_11885.jpg (and Flood_11885.txt)
+   - Status: Removed from processed test/
+   - Reason: Exact binary duplicate of val/Flood_8831.jpg (MD5: 3a3981899bc964c2b2dd9b81e9e5f5fb)
+3. File: Flood_11979.jpg (and Flood_11979.txt)
+   - Status: Removed from processed test/
+   - Reason: Exact binary duplicate of val/Flood_8845.jpg (MD5: 20cb89f506ed9e38e50d2b10fc010c62)
+4. File: Flood_11891.jpg (and Flood_11891.txt)
+   - Status: Removed from processed test/
+   - Reason: Exact binary duplicate of val/Flood_8857.jpg (MD5: 2c60d1f5dee608f62f5f50c28ea2cf0a)
+5. File: Flood_9167.jpg (and Flood_9167.txt)
+   - Status: Removed from processed test/
+   - Reason: Exact binary duplicate of val/Flood_9190.jpg (MD5: db59c9b52b06a63d92fb3365a52a89d0)
+6. File: Flood_12030.jpg (and Flood_12030.txt)
+   - Status: Removed from processed test/
+   - Reason: Exact binary duplicate of val/Flood_9214.jpg (MD5: 0e50eede351b272a7eb2265a4f17ca41)
+
+Integrity Verification:
+  - Validation copies (val/Flood_8723.jpg, Flood_8831.jpg, Flood_8845.jpg, Flood_8857.jpg,
+    Flood_9190.jpg, Flood_9214.jpg) are preserved in images/val/ and labels/val/.
+  - Original Datasets/FloodDET/FloodDET/test/ folder remains 100% untouched.
+
+================================================================================
+7. AUTOMATED VALIDATION RESULTS
+================================================================================
+All 10 rigorous automated quality checks were executed on the processed dataset:
+
+Check 1: Every processed image has a corresponding .txt label file.
+  Result: PASSED (294 / 294 images have matching .txt files).
+Check 2: Except negative image Flood_13125.jpg, every image containing flood has >= 1 class-2 box.
+  Result: PASSED (Train: 99 positive + 1 negative; Val: 100 positive; Test: 94 positive).
+Check 3: No class IDs other than 2 exist in FloodDET labels.
+  Result: PASSED (Class distribution: Exactly {2: 293}).
+Check 4: No bounding-box coordinate is outside [0.0, 1.0].
+  Result: PASSED (All 293 bounding boxes satisfy 0.0 <= coord <= 1.0).
+Check 5: No zero-width or zero-height bounding boxes exist.
+  Result: PASSED (All 293 boxes have positive width and height).
+Check 6: No NaN or Inf values exist in any label file.
+  Result: PASSED (Zero NaN/Inf values detected).
+Check 7: Every label line contains exactly 5 whitespace-separated values.
+  Result: PASSED (Every line follows: <class_id> <x_center> <y_center> <width> <height>).
+Check 8: All processed images are valid and readable by PIL.
+  Result: PASSED (0 corrupt images across train, val, test).
+Check 9: All label files reference valid local images.
+  Result: PASSED (0 orphaned label files).
+Check 10: Final split image and annotation counts confirmed:
+  Result: PASSED.
+    - train: 100 images, 100 labels,  99 annotations
+    - val:   100 images, 100 labels, 100 annotations
+    - test:   94 images,  94 labels,  94 annotations
+    - TOTAL: 294 images, 294 labels, 293 annotations
+
+OVERALL VALIDATION STATUS: 100% PASSED (ZERO FAILURES)
+
+================================================================================
+8. VISUALIZATION SAMPLES
+================================================================================
+Location: Datasets/processed/FloodDET/visualization/
+Total Rendered Images: 20 sample images with drawn cyan bounding boxes and deep-blue
+'waterlogging' text banners.
+
+Sample Breakdown:
+  - Training Split (10 images):
+    * vis_train_Flood_13125.jpg (Negative control demonstration banner: 'No Waterlogging')
+    * vis_train_Flood_12946.jpg
+    * vis_train_Flood_12958.jpg
+    * vis_train_Flood_12974.jpg
+    * vis_train_Flood_12988.jpg
+    * vis_train_Flood_13005.jpg
+    * vis_train_Flood_13018.jpg
+    * vis_train_Flood_13031.jpg
+    * vis_train_Flood_13048.jpg
+    * vis_train_Flood_13216.jpg
+  - Validation Split (5 images):
+    * vis_val_Flood_12084.jpg
+    * vis_val_Flood_8509.jpg
+    * vis_val_Flood_8677.jpg
+    * vis_val_Flood_8791.jpg
+    * vis_val_Flood_8985.jpg
+  - Test Split (5 images):
+    * vis_test_Flood_10855.jpg
+    * vis_test_Flood_10883.jpg
+    * vis_test_Flood_10911.jpg
+    * vis_test_Flood_11993.jpg
+    * vis_test_Flood_13119.jpg
+
+Original images were not modified; visualization images are stored separately.
+
+================================================================================
+9. ERRORS OR WARNINGS
+================================================================================
+- Errors: None (Zero).
+- Warnings: None.
+- All tasks (1 through 9) completed strictly within project guidelines.
+
+================================================================================
+END OF REPORT
+================================================================================

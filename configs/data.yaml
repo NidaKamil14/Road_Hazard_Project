@@ -1,0 +1,13 @@
+# Road Hazard Detection Dataset Configuration
+# Relative paths work from the repository root when running training
+path: ./Datasets/balanced_dataset
+train: train.txt
+val: images/val
+test: images/test
+
+# Hazard Classes
+names:
+  0: pothole
+  1: road_crack
+  2: waterlogging
+  3: construction_barrier
