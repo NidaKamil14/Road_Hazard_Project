@@ -175,4 +175,4 @@ python src/train.py \
 ---
 
 ## 📜 License
-This project is open-sourced under the MIT License for educational and research purposes.
+This project is open-sourced under the MIT License for educational as well as research purposes.
