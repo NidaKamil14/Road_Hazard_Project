@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Road Hazard Detection</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="container header-container">
+      <div class="logo-group">
+        <div class="warning-icon" aria-hidden="true">
+          <span>!</span>
+        </div>
+        <div class="title-group">
+          <span class="app-title">Road Hazard Detection</span>
+          <span class="model-badge">YOLO11</span>
+        </div>
+      </div>
+      <nav class="main-nav" aria-label="Main Navigation">
+        <a href="#" class="nav-link active">Detect</a>
+        <a href="#" class="nav-link">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="container">
+      
+      <!-- Top Section: Dynamic based on state -->
+      <!-- Empty & Selected States Header -->
+      <section id="header-upload" class="section-header">
+        <div class="editorial-column">
+          <div class="wayfinding">
+            <span class="badge-dark">CIVIC DISPATCH</span>
+            <span class="section-label">SECTION 01 // INPUT PROCESSING</span>
+          </div>
+          <h1 class="main-heading">
+            See <span class="highlight-underline">road hazards</span><br>
+            before they become<br>
+            bigger problems.
+          </h1>
+          <p class="editorial-text">
+            Upload a road image and our detection model will identify potholes, road cracks, waterlogging and construction barriers.
+          </p>
+          <div class="spec-card">
+            <div class="spec-header">
+              <span class="spec-label">SUPPORTED FORMAT</span>
+            </div>
+            <p class="spec-value">JPG, JPEG OR PNG &bull; IMAGE UPLOAD ONLY</p>
+          </div>
+        </div>
+
+        <div class="workspace-column">
+          <div class="workspace-tab">
+            <div class="tab-label">
+              <span class="indicator-dot orange"></span>
+              <span>IMAGE UPLOAD</span>
+            </div>
+            <button class="how-it-works-btn" id="btn-how-it-works" type="button">
+              &#9654; HOW IT WORKS &middot; 30 SEC
+            </button>
+          </div>
+          
+          <div class="workspace-card">
+            
+            <!-- STATE 1: Empty Upload State -->
+            <div id="view-empty" class="view-state active">
+              <input type="file" id="file-upload-input" accept="image/jpeg,image/png,image/jpg" class="hidden-input" aria-label="Upload an image">
+              <div id="drop-zone" class="drop-zone" role="button" tabindex="0" aria-label="Drag and drop an image here or click to choose">
+                <div class="upload-icon-container">
+                  <span class="material-symbols-outlined upload-icon">upload</span>
+                </div>
+                <h3 class="drop-heading">UPLOAD A ROAD IMAGE</h3>
+                <p class="drop-subtext">Drag and drop an image here</p>
+                <span class="separator">OR</span>
+                <button type="button" class="btn-primary btn-choose">
+                  CHOOSE IMAGE
+                </button>
+                <span class="format-note">JPG, JPEG OR PNG</span>
+              </div>
+              
+              <!-- Validation / Error State Notification (Hidden by default) -->
+              <div id="view-error" class="error-banner hidden">
+                <span class="material-symbols-outlined">error</span>
+                <span id="error-message">Invalid file type. Please upload a JPG, JPEG or PNG image.</span>
+              </div>
+
+              <div class="action-bar-disabled">
+                <button type="button" class="btn-disabled" id="btn-detect-disabled" disabled>
+                  <span>DETECT HAZARDS</span>
+                  <span class="material-symbols-outlined">arrow_forward</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- STATE 2: Selected Image State -->
+            <div id="view-selected" class="view-state hidden">
+              <div class="image-preview-container">
+                <div class="badge-top-left">READY FOR ANALYSIS</div>
+                <img id="image-preview" src="" alt="Selected road image preview" class="preview-img">
+                <div class="grid-overlay" aria-hidden="true">
+                  <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+                  <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
+                </div>
+              </div>
+              
+              <div class="metadata-strip">
+                <div class="file-info">
+                  <span class="material-symbols-outlined">image</span>
+                  <span id="file-name" class="file-name">sample.jpg</span>
+                  <span class="dot-separator">&bull;</span>
+                  <span id="file-size" class="file-size">2.4 MB</span>
+                </div>
+                <div class="status-ready">
+                  <span class="material-symbols-outlined">verified</span>
+                  <span>Ready</span>
+                </div>
+              </div>
+
+              <div class="action-bar-active">
+                <button type="button" class="btn-text" id="btn-choose-different">
+                  <span class="material-symbols-outlined">sync</span>
+                  <span>Choose a different image</span>
+                </button>
+                <button type="button" class="btn-primary" id="btn-detect-action">
+                  <span>DETECT HAZARDS</span>
+                  <span class="material-symbols-outlined">arrow_forward</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- STATE 3: Analyzing State -->
+            <div id="view-analyzing" class="view-state hidden">
+              <div class="image-preview-container analyzing-overlay">
+                <img id="image-preview-analyzing" src="" alt="Analyzing road image" class="preview-img dimmed">
+                <div class="loading-spinner-container">
+                  <span class="material-symbols-outlined spinner">progress_activity</span>
+                  <span class="loading-text">ANALYZING IMAGE...</span>
+                </div>
+              </div>
+              <div class="metadata-strip analyzing-strip">
+                <div class="pulse-indicator"></div>
+                <span class="analyzing-status-text">Running YOLO11 tensor passes...</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- STATE 4: Detection Results Header (Hidden by default) -->
+      <section id="header-results" class="section-header-results hidden">
+        <div class="results-banner">
+          <div class="status-badge">Analysis Complete</div>
+          <div class="demo-notice">DEMO MODE &mdash; Backend detection is not connected yet.</div>
+          <h1 class="main-heading">
+            <span id="total-detections-text">3</span> <span class="highlight-underline">road hazards</span> detected.
+          </h1>
+          <p class="editorial-text">
+            Review the identified hazards and their confidence scores below.
+          </p>
+        </div>
+
+        <div class="results-grid">
+          <!-- Left: Image Output -->
+          <div class="results-output-card">
+            <div class="card-header dark">
+              <div class="header-left">
+                <span class="indicator-dot orange"></span>
+                <span>Detection Output (Simulated Visualization)</span>
+              </div>
+            </div>
+            <div class="image-result-container">
+              <img id="image-result" src="" alt="Detection result image" class="preview-img">
+              
+              <!-- Bounding boxes will be injected via JS here for real use, 
+                   but we'll keep the mock visual overlays as requested for this demo -->
+              <div class="bounding-box bbox-1" aria-label="Detected Pothole">
+                <div class="bbox-label orange-label">
+                  <span class="indicator-dot orange"></span>
+                  <span id="bbox-1-text">Pothole &middot; 92%</span>
+                </div>
+              </div>
+              <div class="bounding-box bbox-2" aria-label="Detected Road Cracks">
+                <div class="bbox-label yellow-label">
+                  <span class="indicator-dot yellow"></span>
+                  <span id="bbox-2-text">Road Crack &middot; 87%</span>
+                </div>
+              </div>
+              <div class="bounding-box bbox-3" aria-label="Detected Construction Barrier">
+                <div class="bbox-label orange-label">
+                  <span class="indicator-dot orange"></span>
+                  <span id="bbox-3-text">Construction Barrier &middot; 81%</span>
+                </div>
+              </div>
+            </div>
+            <div class="image-metadata-strip">
+              <div class="file-name-small">
+                <span class="material-symbols-outlined">image</span>
+                <span id="result-file-name">SAMPLE.JPG</span>
+              </div>
+              <div class="analysis-complete-text">
+                <span class="indicator-dot orange pulse"></span>
+                Analysis Complete
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Hazard Summary -->
+          <div class="hazard-summary-card">
+            <div class="card-header dark">
+              <div class="header-left">
+                <span class="indicator-dot orange"></span>
+                <span>Hazard Summary</span>
+              </div>
+            </div>
+            <div class="summary-content">
+              
+              <div class="total-metric">
+                <p class="metric-label">Total Detected</p>
+                <div class="metric-value-group">
+                  <span class="metric-big-number" id="summary-total">3</span>
+                  <span class="metric-unit">Detections</span>
+                </div>
+              </div>
+
+              <div class="category-counts" id="category-counts-container">
+                <!-- Injected via JS -->
+              </div>
+
+              <div class="detection-details">
+                <p class="metric-label mb-sm">Detection Details</p>
+                <div class="details-list" id="detection-details-list">
+                  <!-- Injected via JS -->
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="results-actions">
+          <button type="button" class="btn-primary btn-large" id="btn-analyse-another">
+            <span>ANALYSE ANOTHER IMAGE</span>
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </button>
+          <button type="button" class="btn-secondary btn-large" id="btn-download-result">
+            <span class="material-symbols-outlined">download</span>
+            <span>DOWNLOAD RESULT</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Bottom Specification Strip (Visible on Empty/Selected states) -->
+      <section id="hazards-spec" class="hazards-spec">
+        <div class="spec-header-row">
+          <div class="spec-tag">
+            <span class="badge-dark">SPECIFICATION 02</span>
+            <h2 class="spec-heading">HAZARDS WE DETECT</h2>
+          </div>
+        </div>
+        
+        <div class="hazards-grid">
+          <!-- Cat 1 -->
+          <div class="hazard-category">
+            <div class="hazard-top">
+              <div class="hazard-title-row">
+                <span class="cat-id">CAT-01</span>
+                <span class="material-symbols-outlined hazard-icon">landslide</span>
+              </div>
+              <h3 class="hazard-name">POTHOLES</h3>
+              <p class="hazard-desc">Holes and cavities in the road surface</p>
+            </div>
+          </div>
+          <!-- Cat 2 -->
+          <div class="hazard-category">
+            <div class="hazard-top">
+              <div class="hazard-title-row">
+                <span class="cat-id">CAT-02</span>
+                <span class="material-symbols-outlined hazard-icon">broken_image</span>
+              </div>
+              <h3 class="hazard-name">ROAD CRACKS</h3>
+              <p class="hazard-desc">Visible cracks and damaged road surfaces</p>
+            </div>
+          </div>
+          <!-- Cat 3 -->
+          <div class="hazard-category">
+            <div class="hazard-top">
+              <div class="hazard-title-row">
+                <span class="cat-id">CAT-03</span>
+                <span class="material-symbols-outlined hazard-icon">water_drop</span>
+              </div>
+              <h3 class="hazard-name">WATERLOGGING</h3>
+              <p class="hazard-desc">Standing water and flooded road areas</p>
+            </div>
+          </div>
+          <!-- Cat 4 -->
+          <div class="hazard-category">
+            <div class="hazard-top">
+              <div class="hazard-title-row">
+                <span class="cat-id">CAT-04</span>
+                <span class="material-symbols-outlined hazard-icon">traffic</span>
+              </div>
+              <h3 class="hazard-name">CONSTRUCTION BARRIERS</h3>
+              <p class="hazard-desc">Cones, drums and work-zone barriers</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="container footer-container">
+      <span class="footer-text">ROAD HAZARD DETECTION SYSTEM <span class="dot">&bull;</span> COMPUTER VISION PROJECT</span>
+    </div>
+  </footer>
+
+  <!-- Modal: How it Works -->
+  <div id="modal-how-it-works" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-title" class="modal-title">How It Works</h2>
+        <button type="button" class="btn-icon" id="btn-close-modal" aria-label="Close modal">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="video-placeholder">
+          <span class="material-symbols-outlined play-icon">play_circle</span>
+          <p>Video Placeholder (30 Sec)</p>
+        </div>
+        <p class="modal-desc">
+          The Road Hazard Detection System utilizes a YOLO11-based computer vision model to scan images for common road hazards such as potholes, cracks, waterlogging, and construction barriers. 
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
