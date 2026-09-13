@@ -1,3 +1,10 @@
+const CONFIG = {
+  USE_MOCK_API: true,
+  API_BASE_URL: "http://localhost:5000",
+  DETECT_ENDPOINT: "/api/detect",
+  REQUEST_TIMEOUT_MS: 30000
+};
+
 document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements
   const headerUpload = document.getElementById('header-upload');
@@ -7,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const viewEmpty = document.getElementById('view-empty');
   const viewSelected = document.getElementById('view-selected');
   const viewAnalyzing = document.getElementById('view-analyzing');
+  const viewApiError = document.getElementById('view-api-error');
   const viewError = document.getElementById('view-error');
   
   const dropZone = document.getElementById('drop-zone');
@@ -21,8 +29,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnDetectDisabled = document.getElementById('btn-detect-disabled');
   const btnDetectAction = document.getElementById('btn-detect-action');
   const btnChooseDifferent = document.getElementById('btn-choose-different');
+  const btnErrorChooseDifferent = document.getElementById('btn-error-choose-different');
+  const btnRetry = document.getElementById('btn-retry');
   const btnAnalyseAnother = document.getElementById('btn-analyse-another');
   const btnDownloadResult = document.getElementById('btn-download-result');
+
+  const demoModeNotice = document.getElementById('demo-mode-notice');
+  const resultsMainHeading = document.getElementById('results-main-heading');
+  const resultsEditorialText = document.getElementById('results-editorial-text');
+  const hazardSummaryCard = document.querySelector('.hazard-summary-card');
+  const resultsGrid = document.querySelector('.results-grid');
 
   // Modal Elements
   const btnHowItWorks = document.getElementById('btn-how-it-works');
@@ -163,8 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --- State Navigation ---
-  btnChooseDifferent.addEventListener('click', () => {
-    // Reset file input
+  const resetToEmptyState = () => {
     fileInput.value = '';
     currentFile = null;
     imagePreview.src = '';
@@ -172,49 +187,142 @@ document.addEventListener('DOMContentLoaded', () => {
     imageResult.src = '';
     viewError.classList.add('hidden');
     
-    // Switch state
     viewSelected.classList.remove('active');
     viewSelected.classList.add('hidden');
+    viewAnalyzing.classList.remove('active');
+    viewAnalyzing.classList.add('hidden');
+    viewApiError.classList.remove('active');
+    viewApiError.classList.add('hidden');
+    
     viewEmpty.classList.remove('hidden');
     viewEmpty.classList.add('active');
-  });
+  };
+
+  btnChooseDifferent.addEventListener('click', resetToEmptyState);
+  btnErrorChooseDifferent.addEventListener('click', resetToEmptyState);
 
   // Detect Hazards
-  btnDetectAction.addEventListener('click', () => {
+  const performDetection = async () => {
     // Switch to analyzing state
     viewSelected.classList.remove('active');
     viewSelected.classList.add('hidden');
+    viewApiError.classList.remove('active');
+    viewApiError.classList.add('hidden');
     viewAnalyzing.classList.remove('hidden');
     viewAnalyzing.classList.add('active');
 
-    // Simulate API delay
-    setTimeout(() => {
-      showResults();
-    }, 2000);
-  });
+    try {
+      const responseData = await detectHazards(currentFile);
+      
+      // Success
+      showResults(responseData.detections);
+
+    } catch (err) {
+      // Error State
+      viewAnalyzing.classList.remove('active');
+      viewAnalyzing.classList.add('hidden');
+      
+      const errorMessage = document.getElementById('api-error-message');
+      if (err.name === 'AbortError') {
+        errorMessage.textContent = 'Request timed out. The server took too long to respond.';
+      } else {
+        errorMessage.textContent = err.message || 'Unable to process the uploaded image.';
+      }
+      
+      viewApiError.classList.remove('hidden');
+      viewApiError.classList.add('active');
+    }
+  };
+
+  btnDetectAction.addEventListener('click', performDetection);
+  btnRetry.addEventListener('click', performDetection);
+
+  const detectHazards = async (file) => {
+    if (CONFIG.USE_MOCK_API) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve({
+            success: true,
+            detections: MOCK_DETECTIONS
+          });
+        }, 2000);
+      });
+    } else {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT_MS);
+
+      try {
+        const response = await fetch(CONFIG.API_BASE_URL + CONFIG.DETECT_ENDPOINT, {
+          method: 'POST',
+          body: formData,
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error('Backend unavailable or returned an error.');
+        }
+
+        const data = await response.json();
+        if (!data.success) {
+          throw new Error(data.error || 'Invalid server response.');
+        }
+
+        return data;
+      } catch (err) {
+        clearTimeout(timeoutId);
+        throw err;
+      }
+    }
+  };
 
   // Show Results
-  const showResults = () => {
+  const showResults = (detections) => {
+    viewAnalyzing.classList.remove('active');
+    viewAnalyzing.classList.add('hidden');
+
     headerUpload.classList.add('hidden');
     hazardsSpec.classList.add('hidden');
     
     headerResults.classList.remove('hidden');
 
-    populateResultsData();
+    if (!CONFIG.USE_MOCK_API && demoModeNotice) {
+      demoModeNotice.classList.add('hidden');
+    }
+
+    populateResultsData(detections);
   };
 
-  const populateResultsData = () => {
-    const totalDetections = MOCK_DETECTIONS.length;
+  const populateResultsData = (detections = []) => {
+    const totalDetections = detections.length;
     totalDetectionsText.textContent = totalDetections;
     summaryTotal.textContent = totalDetections;
+
+    if (totalDetections === 0) {
+      resultsMainHeading.innerHTML = `No <span class="highlight-underline">road hazards</span> were detected in this image.`;
+      resultsEditorialText.style.display = 'none';
+      if (hazardSummaryCard) hazardSummaryCard.classList.add('hidden');
+      if (resultsGrid) resultsGrid.classList.add('full-width');
+    } else {
+      resultsMainHeading.innerHTML = `<span id="total-detections-text">${totalDetections}</span> <span class="highlight-underline">road hazards</span> detected.`;
+      resultsEditorialText.style.display = 'block';
+      if (hazardSummaryCard) hazardSummaryCard.classList.remove('hidden');
+      if (resultsGrid) resultsGrid.classList.remove('full-width');
+    }
 
     // Calculate Category Counts
     const counts = {};
     HAZARD_CATEGORIES.forEach(cat => counts[cat] = 0);
-    MOCK_DETECTIONS.forEach(det => {
-      if (counts[det.classId] !== undefined) {
-        counts[det.classId]++;
-      }
+    detections.forEach(det => {
+      // Map API format if necessary or use mock format
+      const cat = det.classId || det.class_name;
+      if (cat === 'Pothole') counts['Potholes']++;
+      else if (cat === 'Road Crack') counts['Road Cracks']++;
+      else if (counts[cat] !== undefined) counts[cat]++;
     });
 
     categoryCountsContainer.innerHTML = '';
@@ -232,18 +340,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Populate Details List
     detectionDetailsList.innerHTML = '';
-    MOCK_DETECTIONS.forEach(detail => {
+    detections.forEach(detail => {
+      // Handle both mock format and future API format
+      const title = detail.displayName || detail.class_name;
+      let conf = detail.conf;
+      if (!conf && detail.confidence !== undefined) {
+        conf = Math.round(detail.confidence * 100) + '%';
+      }
+      const color = detail.color || (title === 'Road Crack' ? 'yellow' : 'orange');
+
       const item = document.createElement('div');
       item.className = 'detail-item';
       item.innerHTML = `
         <div class="detail-left">
-          <span class="indicator-dot ${detail.color}"></span>
+          <span class="indicator-dot ${color}"></span>
           <div class="detail-info">
-            <span class="detail-title">${detail.displayName}</span>
+            <span class="detail-title">${title}</span>
           </div>
         </div>
         <div class="detail-right">
-          <span class="detail-conf">${detail.conf}</span>
+          <span class="detail-conf">${conf}</span>
         </div>
       `;
       detectionDetailsList.appendChild(item);

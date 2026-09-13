@@ -152,6 +152,23 @@
               </div>
             </div>
 
+            <!-- STATE 3.5: API Error State -->
+            <div id="view-api-error" class="view-state hidden">
+              <div class="api-error-container">
+                <span class="material-symbols-outlined error-icon-large">error</span>
+                <h3 class="error-heading">Analysis Failed</h3>
+                <p id="api-error-message" class="error-desc">Unable to process the uploaded image.</p>
+                <div class="error-actions">
+                  <button type="button" class="btn-primary" id="btn-retry">
+                    <span>RETRY</span>
+                    <span class="material-symbols-outlined">refresh</span>
+                  </button>
+                  <button type="button" class="btn-text" id="btn-error-choose-different">
+                    <span>Choose a different image</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -160,11 +177,11 @@
       <section id="header-results" class="section-header-results hidden">
         <div class="results-banner">
           <div class="status-badge">Analysis Complete</div>
-          <div class="demo-notice">DEMO MODE &mdash; Backend detection is not connected yet.</div>
-          <h1 class="main-heading">
+          <div id="demo-mode-notice" class="demo-notice">DEMO MODE &mdash; Backend detection is not connected yet.</div>
+          <h1 class="main-heading" id="results-main-heading">
             <span id="total-detections-text">3</span> <span class="highlight-underline">road hazards</span> detected.
           </h1>
-          <p class="editorial-text">
+          <p class="editorial-text" id="results-editorial-text">
             Review the identified hazards and their confidence scores below.
           </p>
         </div>

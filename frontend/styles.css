@@ -715,6 +715,45 @@ body {
   justify-content: flex-start;
 }
 
+/* API Error State */
+.api-error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 2rem;
+  background-color: #ffdad6;
+  border: 2px solid #ba1a1a;
+  min-height: 380px;
+}
+
+.error-icon-large {
+  font-size: 48px;
+  color: #ba1a1a;
+  margin-bottom: var(--space-md);
+}
+
+.error-heading {
+  font-size: 24px;
+  font-weight: 700;
+  color: #93000a;
+  text-transform: uppercase;
+  margin-bottom: var(--space-sm);
+}
+
+.error-desc {
+  font-size: 16px;
+  color: #ba1a1a;
+  margin-bottom: var(--space-lg);
+}
+
+.error-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  align-items: center;
+}
 /* Detection Results Layout */
 .section-header-results {
   padding-top: var(--space-md);
@@ -756,6 +795,9 @@ body {
 @media (min-width: 1024px) {
   .results-grid {
     grid-template-columns: 7fr 5fr;
+  }
+  .results-grid.full-width {
+    grid-template-columns: 1fr;
   }
 }
 
