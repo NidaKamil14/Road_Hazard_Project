@@ -14,12 +14,9 @@
 const ADMIN_CONFIG = {
   API_BASE_URL: "http://localhost:5000",
   ENDPOINTS: {
-    DASHBOARD_SUMMARY: "/api/admin/dashboard",
-    REPORTS:           "/api/admin/reports",
-    REPORT_DETAIL:     "/api/admin/reports/",   // + reportId
-    UPDATE_REPORT:     "/api/admin/reports/",   // + reportId (PATCH)
-    VERIFY_REPORT:     "/api/admin/reports/",   // + reportId + /verify (POST)
-    REJECT_REPORT:     "/api/admin/reports/"    // + reportId + /reject (POST)
+    HAZARDS: "/hazards",
+    HAZARD_DETAIL: "/hazards/",
+    UPDATE_STATUS: "/hazards/"
   },
   REPORTS_PER_PAGE: 6,
   REQUEST_TIMEOUT_MS: 15000
@@ -203,9 +200,17 @@ function showToast(message, type) {
    ============================================================ */
 
 function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+function resolveImageUrl(rawUrl) {
+  if (!rawUrl) return null;
+  if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) return rawUrl;
+  const normalised = rawUrl.startsWith('/') ? rawUrl : '/' + rawUrl;
+  return ADMIN_CONFIG.API_BASE_URL + normalised;
 }
 
 function formatDate(dateStr) {
@@ -255,6 +260,7 @@ function getStatusClass(status) {
   switch (s) {
     case 'pending-review': return 'status-pending';
     case 'pending': return 'status-pending';
+    case 'active': return 'status-pending';
     case 'verified': return 'status-verified';
     case 'in-progress': return 'status-in-progress';
     case 'resolved': return 'status-resolved';
@@ -329,26 +335,31 @@ async function initDashboard(user) {
     }
 
     try {
-      const data = await adminFetch(ADMIN_CONFIG.ENDPOINTS.DASHBOARD_SUMMARY);
+      const data = await adminFetch(ADMIN_CONFIG.ENDPOINTS.HAZARDS + "?limit=500");
 
       if (!data) return; // redirected
 
+      const hazards = data.hazards || [];
+      const activeCount = hazards.filter(h => h.status === 'active').length;
+      const resolvedCount = hazards.filter(h => h.status === 'resolved').length;
+      const highPriorityCount = hazards.filter(h => h.priority_level === 'High' || h.priority_level === 'Critical').length;
+
       // Populate summary cards
-      const summary = data.summary || {};
-      setCardValue('card-total', summary.total_reports);
-      setCardValue('card-pending', summary.pending_review);
-      setCardValue('card-high-priority', summary.high_priority);
-      setCardValue('card-resolved', summary.resolved);
+      setCardValue('card-total', data.total || 0);
+      setCardValue('card-pending', activeCount);
+      setCardValue('card-high-priority', highPriorityCount);
+      setCardValue('card-resolved', resolvedCount);
 
       // Populate recent reports
-      const reports = data.recent_reports || [];
-      if (reports.length === 0) {
+      const recentReports = hazards.slice(0, 5);
+      if (recentReports.length === 0) {
         showState('empty');
         return;
       }
 
-      renderDashboardTable(reports);
+      renderDashboardTable(recentReports);
     } catch (err) {
+      console.error("Dashboard loading failed:", err);
       showState('error');
     }
   }
@@ -370,26 +381,27 @@ async function initDashboard(user) {
       tr.className = 'table-row-hover';
 
       const conf = formatConfidence(report.confidence);
-      const date = formatDate(report.submitted_at || report.date);
-      const time = formatTime(report.submitted_at || report.date);
+      const date = formatDate(report.detected_at);
+      const time = formatTime(report.detected_at);
+      const resolvedImg = resolveImageUrl(report.annotated_image_path);
 
       tr.innerHTML = `
-        <td class="table-cell cell-id">${escapeHtml(report.id || report.report_id || '—')}</td>
+        <td class="table-cell cell-id">${escapeHtml(report.id || '—')}</td>
         <td class="table-cell cell-thumb">
           <div class="report-thumbnail">
-            ${report.thumbnail || report.image_url ? 
-              `<img src="${escapeHtml(report.thumbnail || report.image_url)}" alt="Report thumbnail" class="thumb-img">` :
+            ${resolvedImg ?
+              `<img src="${escapeHtml(resolvedImg)}" alt="Report thumbnail" class="thumb-img">` :
               `<div class="thumb-placeholder"><span class="material-symbols-outlined" style="font-size:20px;color:var(--text-muted);">image</span></div>`
             }
           </div>
         </td>
         <td class="table-cell cell-type">${escapeHtml(report.hazard_type || '—')}</td>
         <td class="table-cell cell-conf">${escapeHtml(conf)}</td>
-        <td class="table-cell cell-priority"><span class="priority-badge ${getPriorityClass(report.priority)}">${escapeHtml((report.priority || '—').toUpperCase())}</span></td>
+        <td class="table-cell cell-priority"><span class="priority-badge ${getPriorityClass(report.priority_level)}">${escapeHtml((report.priority_level || '—').toUpperCase())}</span></td>
         <td class="table-cell cell-status"><span class="status-badge ${getStatusClass(report.status)}">${escapeHtml((report.status || '—').toUpperCase())}</span></td>
         <td class="table-cell cell-date"><div>${escapeHtml(date)}</div><div class="cell-time">${escapeHtml(time)}</div></td>
         <td class="table-cell cell-action">
-          <a href="admin-report-details.html?id=${encodeURIComponent(report.id || report.report_id || '')}" class="btn-view-details">
+          <a href="admin-report-details.html?id=${encodeURIComponent(report.id || '')}" class="btn-view-details">
             <span>DETAILS</span>
             <span class="material-symbols-outlined" style="font-size:14px;">arrow_outward</span>
           </a>
@@ -446,13 +458,14 @@ async function initReports(user) {
     showState('loading');
 
     try {
-      const data = await adminFetch(ADMIN_CONFIG.ENDPOINTS.REPORTS);
+      const data = await adminFetch(ADMIN_CONFIG.ENDPOINTS.HAZARDS + "?limit=500");
       if (!data) return;
 
-      allReports = data.reports || [];
+      allReports = data.hazards || [];
       currentPage = 1;
       applyFilters();
     } catch (err) {
+      console.error("Reports loading failed:", err);
       showState('error');
     }
   }
@@ -464,7 +477,7 @@ async function initReports(user) {
     const searchVal = (searchInput ? searchInput.value.trim().toLowerCase() : '');
     if (searchVal) {
       filtered = filtered.filter(r => {
-        const id = (r.id || r.report_id || '').toLowerCase();
+        const id = (r.id || '').toString().toLowerCase();
         return id.includes(searchVal);
       });
     }
@@ -493,7 +506,7 @@ async function initReports(user) {
     const priorityVal = filterPriority ? filterPriority.value : 'ALL';
     if (priorityVal !== 'ALL') {
       filtered = filtered.filter(r => 
-        (r.priority || '').toLowerCase() === priorityVal.toLowerCase()
+        (r.priority_level || '').toLowerCase() === priorityVal.toLowerCase()
       );
     }
 
@@ -505,7 +518,7 @@ async function initReports(user) {
       const range = ranges[dateVal];
       if (range) {
         filtered = filtered.filter(r => {
-          const d = new Date(r.submitted_at || r.date);
+          const d = new Date(r.detected_at);
           return !isNaN(d.getTime()) && (now - d.getTime()) <= range;
         });
       }
@@ -537,26 +550,27 @@ async function initReports(user) {
         tr.className = 'table-row-hover';
 
         const conf = formatConfidence(report.confidence);
-        const date = formatDate(report.submitted_at || report.date);
-        const time = formatTime(report.submitted_at || report.date);
+        const date = formatDate(report.detected_at);
+        const time = formatTime(report.detected_at);
+        const resolvedImg = resolveImageUrl(report.annotated_image_path);
 
         tr.innerHTML = `
-          <td class="table-cell cell-id">${escapeHtml(report.id || report.report_id || '—')}</td>
+          <td class="table-cell cell-id">${escapeHtml(report.id || '—')}</td>
           <td class="table-cell cell-thumb">
             <div class="report-thumbnail">
-              ${report.thumbnail || report.image_url ? 
-                `<img src="${escapeHtml(report.thumbnail || report.image_url)}" alt="Report thumbnail" class="thumb-img">` :
+              ${resolvedImg ?
+                `<img src="${escapeHtml(resolvedImg)}" alt="Report thumbnail" class="thumb-img">` :
                 `<div class="thumb-placeholder"><span class="material-symbols-outlined" style="font-size:20px;color:var(--text-muted);">image</span></div>`
               }
             </div>
           </td>
           <td class="table-cell cell-type"><div class="cell-type-name">${escapeHtml(report.hazard_type || '—')}</div></td>
           <td class="table-cell cell-conf">${escapeHtml(conf)}</td>
-          <td class="table-cell cell-priority"><span class="priority-badge ${getPriorityClass(report.priority)}">${escapeHtml((report.priority || '—').toUpperCase())}</span></td>
+          <td class="table-cell cell-priority"><span class="priority-badge ${getPriorityClass(report.priority_level)}">${escapeHtml((report.priority_level || '—').toUpperCase())}</span></td>
           <td class="table-cell cell-status"><span class="status-badge ${getStatusClass(report.status)}">${escapeHtml((report.status || '—').toUpperCase())}</span></td>
           <td class="table-cell cell-date"><div>${escapeHtml(date)}</div><div class="cell-time">${escapeHtml(time)}</div></td>
           <td class="table-cell cell-action">
-            <a href="admin-report-details.html?id=${encodeURIComponent(report.id || report.report_id || '')}" class="btn-view-details">
+            <a href="admin-report-details.html?id=${encodeURIComponent(report.id || '')}" class="btn-view-details">
               <span>VIEW</span>
               <span>→</span>
             </a>
@@ -693,10 +707,10 @@ async function initReportDetails(user) {
     showDetailState('loading');
 
     try {
-      const data = await adminFetch(ADMIN_CONFIG.ENDPOINTS.REPORT_DETAIL + encodeURIComponent(reportId));
+      const data = await adminFetch(ADMIN_CONFIG.ENDPOINTS.HAZARD_DETAIL + encodeURIComponent(reportId));
       if (!data) return;
 
-      currentReport = data.report || data;
+      currentReport = data;
       renderReport(currentReport);
       showDetailState('content');
     } catch (err) {
@@ -707,20 +721,21 @@ async function initReportDetails(user) {
   function renderReport(report) {
     // Page title
     const titleEl = document.getElementById('detail-report-id');
-    if (titleEl) titleEl.textContent = 'REPORT ' + (report.id || report.report_id || reportId);
+    if (titleEl) titleEl.textContent = 'REPORT ' + (report.id || reportId);
 
     // Status badge in header
     const statusBadge = document.getElementById('detail-header-status');
     if (statusBadge) {
-      statusBadge.textContent = (report.status || 'Pending Review').toUpperCase();
+      statusBadge.textContent = (report.status || 'active').toUpperCase();
       statusBadge.className = 'status-badge-large ' + getStatusClass(report.status);
     }
 
     // Image
     const imageEl = document.getElementById('detail-image');
     if (imageEl) {
-      if (report.image_url) {
-        imageEl.src = report.image_url;
+      const resolvedImg = resolveImageUrl(report.annotated_image_path);
+      if (resolvedImg) {
+        imageEl.src = resolvedImg;
         imageEl.alt = 'Detection image for report ' + (report.id || reportId);
       } else {
         imageEl.alt = 'No image available';
@@ -729,42 +744,35 @@ async function initReportDetails(user) {
 
     // Render bounding boxes if provided
     const bboxContainer = document.getElementById('detail-bboxes');
-    if (bboxContainer && report.detections && report.detections.length > 0) {
+    if (bboxContainer) {
       bboxContainer.innerHTML = '';
-      report.detections.forEach((det, i) => {
-        if (det.bbox) {
-          const box = document.createElement('div');
-          box.className = 'detail-bbox';
-          const imgEl = document.getElementById('detail-image');
-          if (imgEl && imgEl.naturalWidth) {
-            const w = imgEl.clientWidth;
-            const h = imgEl.clientHeight;
-            const nw = imgEl.naturalWidth;
-            const nh = imgEl.naturalHeight;
-            box.style.left = (det.bbox.x1 / nw * w) + 'px';
-            box.style.top = (det.bbox.y1 / nh * h) + 'px';
-            box.style.width = ((det.bbox.x2 - det.bbox.x1) / nw * w) + 'px';
-            box.style.height = ((det.bbox.y2 - det.bbox.y1) / nh * h) + 'px';
-          }
-          const label = document.createElement('div');
-          label.className = 'detail-bbox-label';
-          label.textContent = (det.class_name || det.hazard_type || 'Hazard') + ' · ' + formatConfidence(det.confidence);
-          box.appendChild(label);
-          bboxContainer.appendChild(box);
-        }
-      });
+      if (report.bounding_box && report.image_width && report.image_height) {
+        const box = document.createElement('div');
+        box.className = 'detail-bbox';
+        const nw = report.image_width;
+        const nh = report.image_height;
+        box.style.left = (report.bounding_box.x1 / nw * 100) + '%';
+        box.style.top = (report.bounding_box.y1 / nh * 100) + '%';
+        box.style.width = ((report.bounding_box.x2 - report.bounding_box.x1) / nw * 100) + '%';
+        box.style.height = ((report.bounding_box.y2 - report.bounding_box.y1) / nh * 100) + '%';
+        const label = document.createElement('div');
+        label.className = 'detail-bbox-label';
+        label.textContent = (report.hazard_type || 'Hazard') + ' · ' + formatConfidence(report.confidence);
+        box.appendChild(label);
+        bboxContainer.appendChild(box);
+      }
     }
 
     // Image metadata
-    setText('detail-filename', report.filename || report.image_filename || '—');
-    setText('detail-submitted', formatDate(report.submitted_at || report.date) + ' · ' + formatTime(report.submitted_at || report.date));
+    setText('detail-filename', report.image_path || '—');
+    setText('detail-submitted', formatDate(report.detected_at) + ' · ' + formatTime(report.detected_at));
 
     // Report details metadata
-    setText('detail-meta-id', report.id || report.report_id || reportId);
+    setText('detail-meta-id', report.id || reportId);
     setText('detail-meta-type', report.hazard_type || '—');
     setText('detail-meta-confidence', formatConfidence(report.confidence));
-    setText('detail-meta-date', formatDate(report.submitted_at || report.date) + ' · ' + formatTime(report.submitted_at || report.date));
-    setText('detail-meta-location', report.location || 'Location not provided');
+    setText('detail-meta-date', formatDate(report.detected_at) + ' · ' + formatTime(report.detected_at));
+    setText('detail-meta-location', (report.latitude !== undefined && report.longitude !== undefined) ? `${report.latitude.toFixed(6)}, ${report.longitude.toFixed(6)}` : 'Location not provided');
 
     // Confidence bar
     const confBar = document.getElementById('detail-conf-bar');
@@ -777,8 +785,8 @@ async function initReportDetails(user) {
     // Priority badge
     const priBadge = document.getElementById('detail-meta-priority');
     if (priBadge) {
-      priBadge.textContent = (report.priority || '—').toUpperCase();
-      priBadge.className = 'priority-badge ' + getPriorityClass(report.priority);
+      priBadge.textContent = (report.priority_level || '—').toUpperCase();
+      priBadge.className = 'priority-badge ' + getPriorityClass(report.priority_level);
     }
 
     // Status badge in details
@@ -789,37 +797,27 @@ async function initReportDetails(user) {
     }
 
     // Set form values
-    const prioritySelect = document.getElementById('action-priority');
-    if (prioritySelect) prioritySelect.value = report.priority || 'Low';
-
     const statusSelect = document.getElementById('action-status');
-    if (statusSelect) statusSelect.value = report.status || 'Pending Review';
+    if (statusSelect) statusSelect.value = (report.status || 'active').toLowerCase();
+
+    // Disable unused form elements
+    const prioritySelect = document.getElementById('action-priority');
+    if (prioritySelect) {
+      prioritySelect.value = report.priority_level || 'Low';
+      prioritySelect.disabled = true;
+    }
 
     const notesField = document.getElementById('action-notes');
-    if (notesField) notesField.value = report.admin_notes || report.notes || '';
+    if (notesField) {
+      notesField.value = report.priority_reason || 'No specific reasoning provided.';
+      notesField.disabled = true;
+    }
 
     // Activity timeline
     const activityContainer = document.getElementById('detail-activity');
-    if (activityContainer && report.activity && report.activity.length > 0) {
-      activityContainer.innerHTML = '';
-      report.activity.forEach(event => {
-        const card = document.createElement('div');
-        card.className = 'activity-event';
-        card.innerHTML = `
-          <div class="activity-event-header">
-            <span class="activity-event-title">
-              <span class="material-symbols-outlined" style="font-size:14px;color:var(--accent-orange);">check_circle</span>
-              ${escapeHtml(event.title || event.action || '—')}
-            </span>
-            <span class="activity-event-time">${escapeHtml(formatTime(event.timestamp || event.date) || '')}</span>
-          </div>
-          <p class="activity-event-desc">${escapeHtml(event.description || '')}</p>
-        `;
-        activityContainer.appendChild(card);
-      });
-      const activitySection = document.getElementById('detail-activity-section');
-      if (activitySection) activitySection.classList.remove('hidden');
-    }
+    if (activityContainer) activityContainer.innerHTML = '';
+    const activitySection = document.getElementById('detail-activity-section');
+    if (activitySection) activitySection.classList.add('hidden');
   }
 
   function setText(id, text) {
@@ -832,20 +830,24 @@ async function initReportDetails(user) {
   const verifyBtn = document.getElementById('btn-verify');
   const rejectBtn = document.getElementById('btn-reject');
 
+  if (verifyBtn) verifyBtn.style.display = 'none';
+  if (rejectBtn) rejectBtn.style.display = 'none';
+
   if (saveBtn) {
     saveBtn.addEventListener('click', async () => {
-      const priority = document.getElementById('action-priority').value;
-      const status = document.getElementById('action-status').value;
-      const notes = document.getElementById('action-notes').value;
+      const statusSelect = document.getElementById('action-status');
+      if (!statusSelect) return;
+
+      const status = String(statusSelect.value).toLowerCase();
 
       saveBtn.disabled = true;
       saveBtn.textContent = 'SAVING...';
 
       try {
-        await adminFetch(ADMIN_CONFIG.ENDPOINTS.UPDATE_REPORT + encodeURIComponent(reportId), {
+        await adminFetch(ADMIN_CONFIG.ENDPOINTS.UPDATE_STATUS + encodeURIComponent(reportId) + '/status', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ priority, status, notes })
+          body: JSON.stringify({ status })
         });
         showToast('Report updated successfully.', 'success');
         loadReport(); // Refresh data
@@ -855,48 +857,6 @@ async function initReportDetails(user) {
         saveBtn.disabled = false;
         saveBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size:16px;">check</span> SAVE CHANGES';
       }
-    });
-  }
-
-  if (verifyBtn) {
-    verifyBtn.addEventListener('click', async () => {
-      verifyBtn.disabled = true;
-      try {
-        await adminFetch(ADMIN_CONFIG.ENDPOINTS.VERIFY_REPORT + encodeURIComponent(reportId) + '/verify', {
-          method: 'POST'
-        });
-        showToast('Detection verified successfully.', 'success');
-        loadReport();
-      } catch (err) {
-        showToast('Failed to verify detection. Please try again.', 'error');
-      } finally {
-        verifyBtn.disabled = false;
-      }
-    });
-  }
-
-  if (rejectBtn) {
-    rejectBtn.addEventListener('click', () => {
-      showConfirmDialog({
-        title: 'Mark as False Detection',
-        message: 'Are you sure you want to mark this detection as false? This will set the status to Rejected.',
-        confirmText: 'MARK AS FALSE',
-        cancelText: 'CANCEL',
-        onConfirm: async () => {
-          rejectBtn.disabled = true;
-          try {
-            await adminFetch(ADMIN_CONFIG.ENDPOINTS.REJECT_REPORT + encodeURIComponent(reportId) + '/reject', {
-              method: 'POST'
-            });
-            showToast('Detection marked as false.', 'success');
-            loadReport();
-          } catch (err) {
-            showToast('Failed to reject detection. Please try again.', 'error');
-          } finally {
-            rejectBtn.disabled = false;
-          }
-        }
-      });
     });
   }
 
