@@ -1,7 +1,6 @@
-from typing import Optional
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from geoalchemy2.elements import WKTElement
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
@@ -12,8 +11,11 @@ from backend.schemas.hazard import (
     HazardListResponse,
     HazardResponse,
     HazardStatusUpdate,
+    PriorityHazardItem,
+    PriorityHazardsResponse,
 )
-from backend.services.priority import compute_priority_score
+from backend.services.priority import calculate_priority_score
+from backend.services.severity import calculate_severity
 
 router = APIRouter(prefix="", tags=["Hazards"])
 
@@ -30,7 +32,9 @@ def _hazard_to_response(h: Hazard) -> HazardResponse:
         class_id=h.class_id,
         confidence=h.confidence,
         severity=h.severity,
-        priority_score=h.priority_score,
+        priority_score=round(float(h.priority_score), 1) if h.priority_score is not None else 50.0,
+        priority_level=h.priority_level or "Medium",
+        priority_reason=h.priority_reason,
         latitude=h.latitude,
         longitude=h.longitude,
         image_path=h.image_path,
@@ -50,11 +54,29 @@ def _hazard_to_response(h: Hazard) -> HazardResponse:
     summary="Record a new detected road hazard",
 )
 def create_hazard(hazard_in: HazardCreate, db: Session = Depends(get_db)):
-    """Persist a road hazard record with PostGIS spatial location and priority score."""
-    # Compute priority score based on severity (Low: 1, Medium: 2, High: 3)
-    p_score = compute_priority_score(hazard_in.severity.value)
+    """Persist a road hazard record with PostGIS spatial location, calculated severity, and priority score."""
+    # 1. Severity calculation (if not explicitly provided, calculate via Severity Engine)
+    if hazard_in.severity is not None:
+        severity_val = hazard_in.severity.value
+    else:
+        severity_val, _ = calculate_severity(
+            hazard_type=hazard_in.hazard_type.value,
+            confidence=hazard_in.confidence,
+            bounding_box=hazard_in.bounding_box,
+            image_width=hazard_in.image_width,
+            image_height=hazard_in.image_height,
+        )
 
-    # PostGIS geometry: POINT(longitude latitude) with SRID 4326
+    # 2. Priority calculation (0 - 100 score, level, and explainable reason)
+    p_score, p_level, p_reason = calculate_priority_score(
+        hazard_type=hazard_in.hazard_type.value,
+        severity=severity_val,
+        confidence=hazard_in.confidence,
+        latitude=hazard_in.latitude,
+        longitude=hazard_in.longitude,
+    )
+
+    # 3. PostGIS geometry: POINT(longitude latitude) with SRID 4326
     # Strictly longitude first, latitude second
     wkt_point = f"POINT({hazard_in.longitude} {hazard_in.latitude})"
     geom_location = WKTElement(wkt_point, srid=4326)
@@ -68,8 +90,10 @@ def create_hazard(hazard_in: HazardCreate, db: Session = Depends(get_db)):
         hazard_type=hazard_in.hazard_type.value,
         class_id=hazard_in.class_id,
         confidence=hazard_in.confidence,
-        severity=hazard_in.severity.value,
+        severity=severity_val,
         priority_score=p_score,
+        priority_level=p_level,
+        priority_reason=p_reason,
         latitude=hazard_in.latitude,
         longitude=hazard_in.longitude,
         location=geom_location,
@@ -99,30 +123,91 @@ def create_hazard(hazard_in: HazardCreate, db: Session = Depends(get_db)):
 
 
 @router.get(
+    "/priority",
+    response_model=PriorityHazardsResponse,
+    summary="Get active hazards ordered by highest maintenance priority",
+)
+def get_priority_hazards(
+    limit: int = Query(20, ge=1, le=100, description="Number of top-priority hazards to return"),
+    status: Optional[str] = Query("active", description="Filter by status (default: active)"),
+    hazard_type: Optional[str] = Query(None, description="Filter by hazard category"),
+    priority_level: Optional[str] = Query(None, description="Filter by priority level (Low, Medium, High, Critical)"),
+    min_priority_score: Optional[float] = Query(None, ge=0.0, le=100.0, description="Filter by minimum priority score"),
+    db: Session = Depends(get_db),
+):
+    """Dedicated endpoint returning urgent road hazards sorted by highest maintenance priority.
+    Designed specifically for Authority dispatch and municipal repair scheduling.
+    """
+    query = db.query(Hazard)
+    if status:
+        query = query.filter(Hazard.status == status.strip().lower())
+    if hazard_type:
+        query = query.filter(Hazard.hazard_type == hazard_type.strip().lower())
+    if priority_level:
+        query = query.filter(Hazard.priority_level == priority_level.strip().capitalize())
+    if min_priority_score is not None:
+        query = query.filter(Hazard.priority_score >= min_priority_score)
+
+    records = query.order_by(Hazard.priority_score.desc()).limit(limit).all()
+
+    items = [
+        PriorityHazardItem(
+            id=h.id,
+            hazard_type=h.hazard_type,
+            severity=h.severity,
+            priority_score=round(float(h.priority_score), 1) if h.priority_score is not None else 50.0,
+            priority_level=h.priority_level or "Medium",
+            priority_reason=h.priority_reason,
+            confidence=h.confidence,
+            latitude=h.latitude,
+            longitude=h.longitude,
+            status=h.status,
+            detected_at=h.detected_at,
+        )
+        for h in records
+    ]
+
+    return PriorityHazardsResponse(
+        count=len(items),
+        hazards=items,
+    )
+
+
+@router.get(
     "",
     response_model=HazardListResponse,
-    summary="List stored hazards with optional filtering and pagination",
+    summary="List stored hazards with optional filtering, sorting, and pagination",
 )
 def list_hazards(
     hazard_type: Optional[str] = Query(None, description="Filter by hazard category (pothole, road_crack, waterlogging, construction_barrier)"),
     severity: Optional[str] = Query(None, description="Filter by severity level (Low, Medium, High)"),
+    priority_level: Optional[str] = Query(None, description="Filter by priority tier (Low, Medium, High, Critical)"),
     status: Optional[str] = Query(None, description="Filter by status (active, resolved)"),
+    sort_by_priority: bool = Query(False, description="Sort by highest priority score first instead of newest"),
     limit: int = Query(50, ge=1, le=500, description="Maximum records to return"),
     offset: int = Query(0, ge=0, description="Offset for pagination"),
     db: Session = Depends(get_db),
 ):
-    """Retrieve stored road hazards with coordinate locations formatted for map consumption."""
+    """Retrieve stored road hazards with coordinates, severity, and priority for map and table consumption."""
     query = db.query(Hazard)
 
     if hazard_type:
         query = query.filter(Hazard.hazard_type == hazard_type.strip().lower())
     if severity:
         query = query.filter(Hazard.severity == severity.strip().capitalize())
+    if priority_level:
+        query = query.filter(Hazard.priority_level == priority_level.strip().capitalize())
     if status:
         query = query.filter(Hazard.status == status.strip().lower())
 
     total_count = query.count()
-    records = query.order_by(Hazard.detected_at.desc()).offset(offset).limit(limit).all()
+
+    if sort_by_priority:
+        query = query.order_by(Hazard.priority_score.desc())
+    else:
+        query = query.order_by(Hazard.detected_at.desc())
+
+    records = query.offset(offset).limit(limit).all()
 
     return HazardListResponse(
         total=total_count,

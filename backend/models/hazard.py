@@ -13,7 +13,11 @@ class Hazard(Base):
     class_id = Column(Integer, nullable=False)
     confidence = Column(Float, nullable=False)
     severity = Column(String(20), nullable=False, default="Medium")
-    priority_score = Column(Integer, nullable=False, default=2)
+    
+    # Priority Engine fields (0 - 100 score, level, and deterministic reason)
+    priority_score = Column(Float, nullable=False, default=50.0)
+    priority_level = Column(String(20), nullable=False, default="Medium", index=True)
+    priority_reason = Column(String(255), nullable=True)
 
     # Coordinates in decimal degrees (WGS 84)
     latitude = Column(Float, nullable=False)
@@ -47,5 +51,6 @@ class Hazard(Base):
     def __repr__(self):
         return (
             f"<Hazard(id={self.id}, type='{self.hazard_type}', conf={self.confidence:.2f}, "
+            f"severity='{self.severity}', priority={self.priority_score:.1f} ({self.priority_level}), "
             f"lat={self.latitude}, lon={self.longitude}, status='{self.status}')>"
         )

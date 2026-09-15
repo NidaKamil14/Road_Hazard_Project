@@ -2,11 +2,22 @@ from .detection import BoundingBox, DetectionItem, DetectionResponse, HealthResp
 from .hazard import (
     HazardType,
     SeverityLevel,
+    PriorityLevel,
     HazardStatus,
     HazardCreate,
     HazardStatusUpdate,
     HazardResponse,
     HazardListResponse,
+    PriorityHazardItem,
+    PriorityHazardsResponse,
+)
+from .routing import (
+    Coordinates,
+    RouteRequest,
+    GeoJSONLineString,
+    RouteHazardDetail,
+    RouteItem,
+    RouteRecommendationResponse,
 )
 
 __all__ = [
@@ -16,9 +27,19 @@ __all__ = [
     "HealthResponse",
     "HazardType",
     "SeverityLevel",
+    "PriorityLevel",
     "HazardStatus",
     "HazardCreate",
     "HazardStatusUpdate",
     "HazardResponse",
     "HazardListResponse",
+    "PriorityHazardItem",
+    "PriorityHazardsResponse",
+    "Coordinates",
+    "RouteRequest",
+    "GeoJSONLineString",
+    "RouteHazardDetail",
+    "RouteItem",
+    "RouteRecommendationResponse",
 ]
+

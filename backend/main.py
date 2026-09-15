@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.database import check_db_status
 from backend.routes.hazards import router as hazards_router
+from backend.routes.routing import router as routing_router
 from backend.schemas.detection import DetectionResponse, HealthResponse
 from backend.services.detector import RoadHazardDetector
 
@@ -92,6 +93,9 @@ app.mount("/outputs", StaticFiles(directory=OUTPUTS_DIR), name="outputs")
 # Register Hazard management routes (CRUD + spatial querying)
 app.include_router(hazards_router, prefix="/hazards")
 
+# Register Hazard-aware routing recommendation routes
+app.include_router(routing_router, prefix="/route")
+
 
 @app.get("/", tags=["General"])
 async def root():
@@ -103,6 +107,7 @@ async def root():
         "health_check": "/health",
         "inference_endpoint": "/detect/image",
         "hazards_endpoint": "/hazards",
+        "routing_endpoint": "/route/recommend",
         "database_status": check_db_status(),
     }
 

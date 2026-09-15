@@ -19,6 +19,13 @@ class SeverityLevel(str, Enum):
     HIGH = "High"
 
 
+class PriorityLevel(str, Enum):
+    LOW = "Low"
+    MEDIUM = "Medium"
+    HIGH = "High"
+    CRITICAL = "Critical"
+
+
 class HazardStatus(str, Enum):
     ACTIVE = "active"
     RESOLVED = "resolved"
@@ -38,7 +45,7 @@ class HazardBase(BaseModel):
     hazard_type: HazardType = Field(..., description="Hazard category name")
     class_id: int = Field(..., ge=0, le=3, description="Class ID (0: pothole, 1: road_crack, 2: waterlogging, 3: construction_barrier)")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Detection confidence [0.0 - 1.0]")
-    severity: SeverityLevel = Field(default=SeverityLevel.MEDIUM, description="Hazard severity level")
+    severity: Optional[SeverityLevel] = Field(default=None, description="Hazard severity. If omitted, calculated automatically by the Severity Engine.")
     latitude: float = Field(..., ge=-90.0, le=90.0, description="WGS84 latitude coordinate")
     longitude: float = Field(..., ge=-180.0, le=180.0, description="WGS84 longitude coordinate")
     image_path: Optional[str] = Field(None, description="Path or URL to original image")
@@ -76,7 +83,9 @@ class HazardResponse(BaseModel):
     class_id: int
     confidence: float
     severity: str
-    priority_score: int
+    priority_score: float = Field(..., description="Calculated maintenance priority score [0.0 - 100.0]")
+    priority_level: str = Field(..., description="Priority tier: Low, Medium, High, Critical")
+    priority_reason: Optional[str] = Field(None, description="Deterministic, explainable justification for the priority score")
     latitude: float
     longitude: float
     image_path: Optional[str] = None
@@ -96,3 +105,26 @@ class HazardListResponse(BaseModel):
     limit: int
     offset: int
     hazards: List[HazardResponse]
+
+
+class PriorityHazardItem(BaseModel):
+    """Summary item optimized for the Authority maintenance dashboard."""
+    id: int
+    hazard_type: str
+    severity: str
+    priority_score: float
+    priority_level: str
+    priority_reason: Optional[str] = None
+    confidence: float
+    latitude: float
+    longitude: float
+    status: str
+    detected_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class PriorityHazardsResponse(BaseModel):
+    """Dedicated response for high-priority road hazards."""
+    count: int
+    hazards: List[PriorityHazardItem]

@@ -117,10 +117,16 @@ def init_database():
             print(f"  [OK] Columns present in 'hazards' table: {', '.join(col_names)}")
 
             has_location = "location" in col_names
+            has_priority = "priority_level" in col_names and "priority_reason" in col_names
             if has_location:
                 print("  [OK] Spatial 'location' geometry column is present.")
             else:
                 print("  [Warning] 'location' geometry column not found.")
+
+            if has_priority:
+                print("  [OK] Priority engine columns (priority_score, priority_level, priority_reason) are present.")
+            else:
+                print("  [Warning] Priority engine columns need migration (run python backend/migrate_db.py).")
     except Exception as e:
         print(f"  [Warning] Table verification query returned an error: {e}")
 
