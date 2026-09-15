@@ -39,3 +39,8 @@ yolo26n.pt
 
 # Allow trained baseline model weights
 !runs/**/weights/best.pt
+
+# Runtime-generated files and local design references
+backend/outputs/
+backend/uploads/
+stitch-reference/

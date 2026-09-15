@@ -1,9 +1,32 @@
 const CONFIG = {
-  USE_MOCK_API: true,
-  API_BASE_URL: "http://localhost:5000",
-  DETECT_ENDPOINT: "/api/detect",
+  API_BASE_URL: "http://127.0.0.1:5000",
+  DETECT_ENDPOINT: "/detect/image?conf=0.25&iou=0.45",
   REQUEST_TIMEOUT_MS: 30000
 };
+
+// Maps raw backend class_name values to display labels
+const CLASS_NAME_MAP = {
+  pothole:               "Pothole",
+  road_crack:            "Road Crack",
+  waterlogging:          "Waterlogging",
+  construction_barrier:  "Construction Barrier"
+};
+
+// Maps display names to category keys used in the summary counts
+const DISPLAY_TO_CATEGORY = {
+  "Pothole":              "Potholes",
+  "Road Crack":           "Road Cracks",
+  "Waterlogging":         "Waterlogging",
+  "Construction Barrier": "Construction Barriers"
+};
+
+// Ordered list of category display keys — must match DISPLAY_TO_CATEGORY values
+const HAZARD_CATEGORIES = [
+  "Potholes",
+  "Road Cracks",
+  "Waterlogging",
+  "Construction Barriers"
+];
 
 document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements
@@ -54,20 +77,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const detectionDetailsList = document.getElementById('detection-details-list');
 
   let currentFile = null;
-
-  // Mock Data for Results
-  const MOCK_DETECTIONS = [
-    { classId: 'Potholes', displayName: 'Pothole', conf: '92%', color: 'orange' },
-    { classId: 'Road Cracks', displayName: 'Road Crack', conf: '87%', color: 'yellow' },
-    { classId: 'Construction Barriers', displayName: 'Construction Barrier', conf: '81%', color: 'orange' }
-  ];
-
-  const HAZARD_CATEGORIES = [
-    'Potholes',
-    'Road Cracks',
-    'Waterlogging',
-    'Construction Barriers'
-  ];
+  let isProcessing = false;
+  // Track the local preview object URL so we can revoke it when done
+  let currentPreviewUrl = null;
 
   // --- Modal Logic ---
   const openModal = () => {
@@ -107,6 +119,13 @@ document.addEventListener('DOMContentLoaded', () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
+  const revokePreviewUrl = () => {
+    if (currentPreviewUrl) {
+      URL.revokeObjectURL(currentPreviewUrl);
+      currentPreviewUrl = null;
+    }
+  };
+
   const handleFileSelect = (file) => {
     viewError.classList.add('hidden');
 
@@ -117,13 +136,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // Revoke any previous object URL before creating a new one
+    revokePreviewUrl();
+
     currentFile = file;
 
-    // Create object URL for preview
-    const objectUrl = URL.createObjectURL(file);
-    imagePreview.src = objectUrl;
-    imagePreviewAnalyzing.src = objectUrl;
-    imageResult.src = objectUrl; // Use the same image for the mock result
+    // Create object URL for the upload preview only
+    currentPreviewUrl = URL.createObjectURL(file);
+    imagePreview.src = currentPreviewUrl;
+    imagePreviewAnalyzing.src = currentPreviewUrl;
+    // imageResult will be set to the backend annotated image after analysis
 
     fileNameDisplay.textContent = file.name;
     resultFileName.textContent = file.name.toUpperCase();
@@ -182,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetToEmptyState = () => {
     fileInput.value = '';
     currentFile = null;
+    revokePreviewUrl();
     imagePreview.src = '';
     imagePreviewAnalyzing.src = '';
     imageResult.src = '';
@@ -196,6 +219,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     viewEmpty.classList.remove('hidden');
     viewEmpty.classList.add('active');
+
+    isProcessing = false;
   };
 
   btnChooseDifferent.addEventListener('click', resetToEmptyState);
@@ -203,6 +228,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Detect Hazards
   const performDetection = async () => {
+    // Prevent duplicate submissions while a request is running
+    if (isProcessing) return;
+    isProcessing = true;
+
     // Switch to analyzing state
     viewSelected.classList.remove('active');
     viewSelected.classList.add('hidden');
@@ -213,12 +242,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       const responseData = await detectHazards(currentFile);
-      
-      // Success
-      showResults(responseData.detections);
+
+      // Revoke the local preview URL — the annotated image from the backend
+      // is now the authoritative visual output.
+      revokePreviewUrl();
+
+      showResults(responseData);
 
     } catch (err) {
-      // Error State
+      // Restore processing flag and show error
+      isProcessing = false;
+
       viewAnalyzing.classList.remove('active');
       viewAnalyzing.classList.add('hidden');
       
@@ -237,92 +271,144 @@ document.addEventListener('DOMContentLoaded', () => {
   btnDetectAction.addEventListener('click', performDetection);
   btnRetry.addEventListener('click', performDetection);
 
+  /**
+   * Sends the image file to the real FastAPI YOLO backend.
+   * Returns the parsed DetectionResponse on success.
+   * Throws a descriptive Error on any failure — never falls back to mock data.
+   */
   const detectHazards = async (file) => {
-    if (CONFIG.USE_MOCK_API) {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          resolve({
-            success: true,
-            detections: MOCK_DETECTIONS
-          });
-        }, 2000);
+    const formData = new FormData();
+    // Field name MUST be "file" to match the FastAPI UploadFile parameter
+    formData.append('file', file);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT_MS);
+
+    let response;
+    try {
+      response = await fetch(CONFIG.API_BASE_URL + CONFIG.DETECT_ENDPOINT, {
+        method: 'POST',
+        body: formData,
+        // Do NOT set Content-Type — the browser must add the multipart boundary
+        signal: controller.signal
       });
-    } else {
-      const formData = new FormData();
-      formData.append('image', file);
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT_MS);
-
-      try {
-        const response = await fetch(CONFIG.API_BASE_URL + CONFIG.DETECT_ENDPOINT, {
-          method: 'POST',
-          body: formData,
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          throw new Error('Backend unavailable or returned an error.');
-        }
-
-        const data = await response.json();
-        if (!data.success) {
-          throw new Error(data.error || 'Invalid server response.');
-        }
-
-        return data;
-      } catch (err) {
-        clearTimeout(timeoutId);
-        throw err;
-      }
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') throw err;
+      throw new Error(
+        'Cannot reach the detection server. Please ensure the backend is running on http://127.0.0.1:5000.'
+      );
     }
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      let detail = `Server returned ${response.status}`;
+      try {
+        const errJson = await response.json();
+        if (errJson.detail) detail = errJson.detail;
+      } catch (_) { /* ignore JSON parse error on error body */ }
+      throw new Error(detail);
+    }
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (_) {
+      throw new Error('The server returned an invalid response. Please try again.');
+    }
+
+    if (!data.success) {
+      throw new Error(data.error || 'The server indicated the detection did not succeed.');
+    }
+
+    return data;
   };
 
-  // Show Results
-  const showResults = (detections) => {
+  /**
+   * Resolves the annotated_image_url from the backend response.
+   * Prefixes relative URLs with the API base URL.
+   */
+  const resolveAnnotatedImageUrl = (rawUrl) => {
+    if (!rawUrl) return null;
+    if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
+      return rawUrl;
+    }
+    const normalised = rawUrl.startsWith('/') ? rawUrl : '/' + rawUrl;
+    return CONFIG.API_BASE_URL + normalised;
+  };
+
+  /**
+   * Transitions to the results view using the real backend DetectionResponse.
+   */
+  const showResults = (responseData) => {
     viewAnalyzing.classList.remove('active');
     viewAnalyzing.classList.add('hidden');
 
     headerUpload.classList.add('hidden');
     hazardsSpec.classList.add('hidden');
-    
     headerResults.classList.remove('hidden');
 
-    if (!CONFIG.USE_MOCK_API && demoModeNotice) {
+    // Always hide the demo-mode notice — results are real
+    if (demoModeNotice) {
       demoModeNotice.classList.add('hidden');
     }
 
-    populateResultsData(detections);
+    // Display the backend annotated image (already contains YOLO bounding boxes)
+    const annotatedUrl = resolveAnnotatedImageUrl(responseData.annotated_image_url);
+    if (annotatedUrl) {
+      imageResult.src = annotatedUrl;
+      imageResult.onerror = () => {
+        imageResult.alt = 'Annotated image could not be loaded from the server.';
+      };
+    } else {
+      imageResult.alt = 'No annotated image was returned by the server.';
+    }
+
+    populateResultsData(responseData);
   };
 
-  const populateResultsData = (detections = []) => {
-    const totalDetections = detections.length;
+  /**
+   * Populates counts and detail cards from the real DetectionResponse object.
+   */
+  const populateResultsData = (responseData) => {
+    const detections = responseData.detections || [];
+    const totalDetections = responseData.total_detections;
+
     totalDetectionsText.textContent = totalDetections;
     summaryTotal.textContent = totalDetections;
 
     if (totalDetections === 0) {
-      resultsMainHeading.innerHTML = `No <span class="highlight-underline">road hazards</span> were detected in this image.`;
+      // Update heading for zero-detection case without re-creating the span
+      resultsMainHeading.textContent = '';
+      const noText = document.createTextNode('No ');
+      const underlineSpan = document.createElement('span');
+      underlineSpan.className = 'highlight-underline';
+      underlineSpan.textContent = 'road hazards';
+      resultsMainHeading.appendChild(noText);
+      resultsMainHeading.appendChild(underlineSpan);
+      resultsMainHeading.appendChild(document.createTextNode(' were detected in this image.'));
       resultsEditorialText.style.display = 'none';
       if (hazardSummaryCard) hazardSummaryCard.classList.add('hidden');
       if (resultsGrid) resultsGrid.classList.add('full-width');
     } else {
-      resultsMainHeading.innerHTML = `<span id="total-detections-text">${totalDetections}</span> <span class="highlight-underline">road hazards</span> detected.`;
+      // Update the count in the existing span to avoid re-creating DOM and orphaning the ref
+      totalDetectionsText.textContent = totalDetections;
       resultsEditorialText.style.display = 'block';
       if (hazardSummaryCard) hazardSummaryCard.classList.remove('hidden');
       if (resultsGrid) resultsGrid.classList.remove('full-width');
     }
 
-    // Calculate Category Counts
+    // Build category counts from the real detections array
     const counts = {};
     HAZARD_CATEGORIES.forEach(cat => counts[cat] = 0);
     detections.forEach(det => {
-      // Map API format if necessary or use mock format
-      const cat = det.classId || det.class_name;
-      if (cat === 'Pothole') counts['Potholes']++;
-      else if (cat === 'Road Crack') counts['Road Cracks']++;
-      else if (counts[cat] !== undefined) counts[cat]++;
+      // Map raw backend class_name ("pothole") → display name ("Pothole") → category key ("Potholes")
+      const displayName = CLASS_NAME_MAP[det.class_name] || det.class_name;
+      const categoryKey = DISPLAY_TO_CATEGORY[displayName];
+      if (categoryKey !== undefined) {
+        counts[categoryKey]++;
+      }
     });
 
     categoryCountsContainer.innerHTML = '';
@@ -331,39 +417,61 @@ document.addEventListener('DOMContentLoaded', () => {
       const isZero = value === 0;
       const row = document.createElement('div');
       row.className = 'count-row';
-      row.innerHTML = `
-        <span class="count-name ${isZero ? 'zero' : ''}">${cat}</span>
-        <span class="count-val ${isZero ? 'zero' : ''}">${value}</span>
-      `;
+      // Use textContent for safe insertion — no innerHTML with data values
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'count-name' + (isZero ? ' zero' : '');
+      nameSpan.textContent = cat;
+      const valSpan = document.createElement('span');
+      valSpan.className = 'count-val' + (isZero ? ' zero' : '');
+      valSpan.textContent = value;
+      row.appendChild(nameSpan);
+      row.appendChild(valSpan);
       categoryCountsContainer.appendChild(row);
     });
 
-    // Populate Details List
+    // Populate detection detail cards from the real detections
     detectionDetailsList.innerHTML = '';
-    detections.forEach(detail => {
-      // Handle both mock format and future API format
-      const title = detail.displayName || detail.class_name;
-      let conf = detail.conf;
-      if (!conf && detail.confidence !== undefined) {
-        conf = Math.round(detail.confidence * 100) + '%';
-      }
-      const color = detail.color || (title === 'Road Crack' ? 'yellow' : 'orange');
+    detections.forEach(det => {
+      const displayName = CLASS_NAME_MAP[det.class_name] || det.class_name;
+      // Convert decimal confidence to percentage, e.g. 0.8179 → "81.8%"
+      const confidencePct = (det.confidence * 100).toFixed(1) + '%';
+      // Colour indicator: yellow for Road Crack, orange for everything else
+      const color = displayName === 'Road Crack' ? 'yellow' : 'orange';
 
       const item = document.createElement('div');
       item.className = 'detail-item';
-      item.innerHTML = `
-        <div class="detail-left">
-          <span class="indicator-dot ${color}"></span>
-          <div class="detail-info">
-            <span class="detail-title">${title}</span>
-          </div>
-        </div>
-        <div class="detail-right">
-          <span class="detail-conf">${conf}</span>
-        </div>
-      `;
+
+      const leftDiv = document.createElement('div');
+      leftDiv.className = 'detail-left';
+
+      const dot = document.createElement('span');
+      dot.className = 'indicator-dot ' + color;
+
+      const infoDiv = document.createElement('div');
+      infoDiv.className = 'detail-info';
+
+      const titleSpan = document.createElement('span');
+      titleSpan.className = 'detail-title';
+      titleSpan.textContent = displayName;
+
+      infoDiv.appendChild(titleSpan);
+      leftDiv.appendChild(dot);
+      leftDiv.appendChild(infoDiv);
+
+      const rightDiv = document.createElement('div');
+      rightDiv.className = 'detail-right';
+
+      const confSpan = document.createElement('span');
+      confSpan.className = 'detail-conf';
+      confSpan.textContent = confidencePct;
+
+      rightDiv.appendChild(confSpan);
+      item.appendChild(leftDiv);
+      item.appendChild(rightDiv);
       detectionDetailsList.appendChild(item);
     });
+
+    isProcessing = false;
   };
 
   // Analyse Another Image
@@ -374,6 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     fileInput.value = '';
     currentFile = null;
+    revokePreviewUrl();
     imagePreview.src = '';
     imagePreviewAnalyzing.src = '';
     imageResult.src = '';
@@ -386,6 +495,8 @@ document.addEventListener('DOMContentLoaded', () => {
     viewSelected.classList.add('hidden');
     viewEmpty.classList.remove('hidden');
     viewEmpty.classList.add('active');
+
+    isProcessing = false;
   });
 
   // Download Result

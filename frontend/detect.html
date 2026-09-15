@@ -179,7 +179,7 @@
       <section id="header-results" class="section-header-results hidden">
         <div class="results-banner">
           <div class="status-badge">Analysis Complete</div>
-          <div id="demo-mode-notice" class="demo-notice">DEMO MODE &mdash; Backend detection is not connected yet.</div>
+          <div id="demo-mode-notice" class="demo-notice hidden">YOLO Model Output &mdash; Real backend detections.</div>
           <h1 class="main-heading" id="results-main-heading">
             <span id="total-detections-text">3</span> <span class="highlight-underline">road hazards</span> detected.
           </h1>
@@ -194,32 +194,11 @@
             <div class="card-header dark">
               <div class="header-left">
                 <span class="indicator-dot orange"></span>
-                <span>Detection Output (Simulated Visualization)</span>
+                <span>YOLO DETECTION OUTPUT</span>
               </div>
             </div>
             <div class="image-result-container">
               <img id="image-result" src="" alt="Detection result image" class="preview-img">
-              
-              <!-- Bounding boxes will be injected via JS here for real use, 
-                   but we'll keep the mock visual overlays as requested for this demo -->
-              <div class="bounding-box bbox-1" aria-label="Detected Pothole">
-                <div class="bbox-label orange-label">
-                  <span class="indicator-dot orange"></span>
-                  <span id="bbox-1-text">Pothole &middot; 92%</span>
-                </div>
-              </div>
-              <div class="bounding-box bbox-2" aria-label="Detected Road Cracks">
-                <div class="bbox-label yellow-label">
-                  <span class="indicator-dot yellow"></span>
-                  <span id="bbox-2-text">Road Crack &middot; 87%</span>
-                </div>
-              </div>
-              <div class="bounding-box bbox-3" aria-label="Detected Construction Barrier">
-                <div class="bbox-label orange-label">
-                  <span class="indicator-dot orange"></span>
-                  <span id="bbox-3-text">Construction Barrier &middot; 81%</span>
-                </div>
-              </div>
             </div>
             <div class="image-metadata-strip">
               <div class="file-name-small">
