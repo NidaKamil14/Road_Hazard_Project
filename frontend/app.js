@@ -226,6 +226,21 @@ document.addEventListener('DOMContentLoaded', () => {
   btnChooseDifferent.addEventListener('click', resetToEmptyState);
   btnErrorChooseDifferent.addEventListener('click', resetToEmptyState);
 
+  // Get location helper
+  const getCurrentLocation = () => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("Geolocation is not supported by your browser."));
+      } else {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          timeout: 10000,
+          maximumAge: 0,
+          enableHighAccuracy: true
+        });
+      }
+    });
+  };
+
   // Detect Hazards
   const performDetection = async () => {
     // Prevent duplicate submissions while a request is running
@@ -241,13 +256,24 @@ document.addEventListener('DOMContentLoaded', () => {
     viewAnalyzing.classList.add('active');
 
     try {
+      let position;
+      try {
+        position = await getCurrentLocation();
+      } catch (geoErr) {
+        throw new Error('Location access is required to submit a hazard report. Please allow location access and try again.');
+      }
+
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+
       const responseData = await detectHazards(currentFile);
+      const saveResults = await saveHazardsToDatabase(responseData, latitude, longitude);
 
       // Revoke the local preview URL — the annotated image from the backend
       // is now the authoritative visual output.
       revokePreviewUrl();
 
-      showResults(responseData);
+      showResults(responseData, saveResults);
 
     } catch (err) {
       // Restore processing flag and show error
@@ -339,9 +365,45 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   /**
+   * Saves detected hazards to the PostgreSQL database.
+   */
+  const saveHazardsToDatabase = async (responseData, latitude, longitude) => {
+    const detections = responseData.detections || [];
+    if (detections.length === 0) return { attempted: 0, successful: 0 };
+
+    const promises = detections.map(det => {
+      const payload = {
+        hazard_type: det.class_name,
+        class_id: det.class_id,
+        confidence: det.confidence,
+        latitude: latitude,
+        longitude: longitude,
+        image_width: responseData.image_width,
+        image_height: responseData.image_height,
+        annotated_image_path: resolveAnnotatedImageUrl(responseData.annotated_image_url),
+        bounding_box: det.bounding_box
+      };
+
+      return fetch(CONFIG.API_BASE_URL + "/hazards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).then(res => {
+        if (!res.ok) throw new Error("Database save failed");
+        return res;
+      });
+    });
+
+    const results = await Promise.allSettled(promises);
+    const successful = results.filter(r => r.status === 'fulfilled').length;
+
+    return { attempted: detections.length, successful: successful };
+  };
+
+  /**
    * Transitions to the results view using the real backend DetectionResponse.
    */
-  const showResults = (responseData) => {
+  const showResults = (responseData, saveResults) => {
     viewAnalyzing.classList.remove('active');
     viewAnalyzing.classList.add('hidden');
 
@@ -352,6 +414,31 @@ document.addEventListener('DOMContentLoaded', () => {
     // Always hide the demo-mode notice — results are real
     if (demoModeNotice) {
       demoModeNotice.classList.add('hidden');
+    }
+
+    let saveNotice = document.getElementById('save-status-notice');
+    if (!saveNotice) {
+        saveNotice = document.createElement('div');
+        saveNotice.id = 'save-status-notice';
+        saveNotice.className = 'status-badge';
+        saveNotice.style.marginTop = '1rem';
+        const banner = document.querySelector('.results-banner');
+        if (banner) banner.insertBefore(saveNotice, banner.children[1] || banner.firstChild);
+    }
+
+    if (saveResults && saveResults.attempted > 0) {
+        if (saveResults.successful === saveResults.attempted) {
+            saveNotice.textContent = `All ${saveResults.successful} hazard(s) successfully saved to database.`;
+            saveNotice.style.backgroundColor = 'var(--success-color, #10b981)';
+            saveNotice.style.color = '#fff';
+        } else {
+            saveNotice.textContent = `Warning: Only ${saveResults.successful} of ${saveResults.attempted} hazards were saved.`;
+            saveNotice.style.backgroundColor = 'var(--warning-color, #f59e0b)';
+            saveNotice.style.color = '#fff';
+        }
+        saveNotice.style.display = 'inline-block';
+    } else if (saveNotice) {
+        saveNotice.style.display = 'none';
     }
 
     // Display the backend annotated image (already contains YOLO bounding boxes)
