@@ -1,0 +1,209 @@
+/* 
+  mapStyles.css 
+  Clean, dark-mode compatible styling for the Hazard Map module.
+  Designed to overlay on the map without taking up excessive screen real estate.
+*/
+
+.hazard-map-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100vh; /* Adjust in host app if needed */
+  min-height: 500px;
+  background-color: #1a1a1a;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.hazard-map-container {
+  width: 100%;
+  height: 100%;
+  z-index: 1; /* Leaflet map z-index */
+}
+
+/* Routing Sidebar Floating UI */
+.routing-sidebar {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: 320px;
+  background: rgba(25, 25, 28, 0.95);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  color: #fff;
+  z-index: 1000; /* Above Leaflet map */
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.routing-sidebar h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #e0e0e0;
+}
+
+.routing-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.input-group label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #a0a0a0;
+  font-weight: 500;
+}
+
+.input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.routing-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #fff;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.routing-input:focus {
+  border-color: #3b82f6;
+}
+
+.btn-primary {
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 8px;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #2563eb;
+}
+
+.btn-primary:disabled {
+  background: #475569;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Route Summary Panel */
+.route-summary {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.route-summary h4 {
+  margin: 0 0 8px 0;
+  font-size: 0.9rem;
+  color: #4ade80; /* Green for success */
+}
+
+.summary-stats {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  color: #cbd5e1;
+}
+
+.summary-reason {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* Custom Marker Styles */
+.custom-marker {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.marker-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 4px rgba(0,0,0,0.5);
+}
+
+.marker-critical { background-color: #ef4444; } /* Red */
+.marker-high { background-color: #f97316; }     /* Orange */
+.marker-medium { background-color: #eab308; }   /* Yellow */
+.marker-low { background-color: #3b82f6; }      /* Blue */
+
+/* Leaflet Popup Dark Mode Overrides */
+.leaflet-popup-content-wrapper {
+  background: #1e1e24;
+  color: #e0e0e0;
+  border-radius: 8px;
+  border: 1px solid #333;
+}
+.leaflet-popup-tip {
+  background: #1e1e24;
+}
+.leaflet-container a.leaflet-popup-close-button {
+  color: #a0a0a0;
+}
+.popup-content h4 {
+  margin: 0 0 4px 0;
+  color: #fff;
+  text-transform: capitalize;
+}
+.popup-content p {
+  margin: 4px 0;
+  font-size: 13px;
+}
+.priority-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+.badge-critical { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+.badge-high { background: rgba(249, 115, 22, 0.2); color: #f97316; }
+.badge-medium { background: rgba(234, 179, 8, 0.2); color: #eab308; }
+.badge-low { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+
+/* Status Messages */
+.error-message {
+  color: #ef4444;
+  font-size: 0.8rem;
+  background: rgba(239, 68, 68, 0.1);
+  padding: 8px;
+  border-radius: 4px;
+}
+.empty-state {
+  color: #a0a0a0;
+  font-size: 0.8rem;
+  text-align: center;
+  font-style: italic;
+}
