@@ -1,30 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Road Hazard Detection</title>
+  <title>Access Gateway — Road Hazard Detection</title>
+  <meta name="description"
+    content="Road Hazard Detection System access gateway. Public users can detect road hazards without an account. Municipal authorities can sign in to manage reports.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
   <!-- Header -->
   <header class="app-header">
     <div class="container header-container">
-      <div class="logo-group">
+      <a href="index.html" class="logo-group" style="text-decoration:none;color:inherit;">
         <div class="warning-icon" aria-hidden="true">
           <span>!</span>
         </div>
         <div class="title-group">
           <span class="app-title">Road Hazard Detection</span>
-          <span class="model-badge">YOLO11</span>
+          <span class="model-badge">YOLO-BASED</span>
         </div>
-      </div>
+      </a>
       <nav class="main-nav" aria-label="Main Navigation">
-        <a href="#" class="nav-link active">Detect</a>
+        <a href="detect.html" class="nav-link">Detect</a>
+        <a href="index.html" class="nav-link active">Authority</a>
         <a href="#" class="nav-link">About</a>
       </nav>
     </div>
@@ -33,305 +40,171 @@
   <!-- Main Content -->
   <main class="main-content">
     <div class="container">
-      
-      <!-- Top Section: Dynamic based on state -->
-      <!-- Empty & Selected States Header -->
-      <section id="header-upload" class="section-header">
-        <div class="editorial-column">
-          <div class="wayfinding">
-            <span class="badge-dark">CIVIC DISPATCH</span>
-            <span class="section-label">SECTION 01 // INPUT PROCESSING</span>
+
+      <!-- Session Check Overlay -->
+      <div id="session-check-overlay" class="gateway-session-check" role="status" aria-live="polite">
+        <div class="session-check-card">
+          <div class="session-check-header">
+            <div class="session-check-header-left">
+              <span class="indicator-dot orange pulse-dot"></span>
+              <span class="session-check-label">AUTHORITY VERIFICATION</span>
+            </div>
+            <span class="session-check-badge">SESSION STATUS</span>
           </div>
-          <h1 class="main-heading">
-            See <span class="highlight-underline">road hazards</span><br>
-            before they become<br>
-            bigger problems.
+          <div class="session-check-body">
+            <h1 class="session-check-title">CHECKING AUTHORITY SESSION...</h1>
+            <p class="session-check-desc">Checking whether you already have an active authority session.</p>
+            <div class="session-check-progress">
+              <div class="session-check-bar">
+                <div class="session-check-bar-fill"></div>
+              </div>
+              <div class="session-check-status-row">
+                <span>PORTAL: AUTHORITY DISPATCH</span>
+                <span>STATUS: CONNECTING</span>
+              </div>
+            </div>
+          </div>
+          <div class="session-check-footer">
+            <a href="detect.html" class="btn-secondary session-check-escape">
+              <span class="material-symbols-outlined" style="font-size:18px;">arrow_back</span>
+              <span>CONTINUE AS PUBLIC USER →</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gateway Content (hidden during session check) -->
+      <div id="gateway-content" class="gateway-content hidden">
+        <!-- Page Header -->
+        <div class="gateway-header">
+          <div class="wayfinding">
+            <span class="badge-dark">ACCESS GATEWAY</span>
+            <span class="section-label">SYSTEM PORTAL</span>
+          </div>
+          <h1 class="main-heading gateway-heading">
+            Road Hazard <span class="highlight-underline">Detection</span> Portal.
           </h1>
           <p class="editorial-text">
-            Upload a road image and our detection model will identify potholes, road cracks, waterlogging and construction barriers.
-          </p>
-          <div class="spec-card">
-            <div class="spec-header">
-              <span class="spec-label">SUPPORTED FORMAT</span>
-            </div>
-            <p class="spec-value">JPG, JPEG OR PNG &bull; IMAGE UPLOAD ONLY</p>
-          </div>
-        </div>
-
-        <div class="workspace-column">
-          <div class="workspace-tab">
-            <div class="tab-label">
-              <span class="indicator-dot orange"></span>
-              <span>IMAGE UPLOAD</span>
-            </div>
-            <button class="how-it-works-btn" id="btn-how-it-works" type="button">
-              &#9654; HOW IT WORKS &middot; 30 SEC
-            </button>
-          </div>
-          
-          <div class="workspace-card">
-            
-            <!-- STATE 1: Empty Upload State -->
-            <div id="view-empty" class="view-state active">
-              <input type="file" id="file-upload-input" accept="image/jpeg,image/png,image/jpg" class="hidden-input" aria-label="Upload an image">
-              <div id="drop-zone" class="drop-zone" role="button" tabindex="0" aria-label="Drag and drop an image here or click to choose">
-                <div class="upload-icon-container">
-                  <span class="material-symbols-outlined upload-icon">upload</span>
-                </div>
-                <h3 class="drop-heading">UPLOAD A ROAD IMAGE</h3>
-                <p class="drop-subtext">Drag and drop an image here</p>
-                <span class="separator">OR</span>
-                <button type="button" class="btn-primary btn-choose">
-                  CHOOSE IMAGE
-                </button>
-                <span class="format-note">JPG, JPEG OR PNG</span>
-              </div>
-              
-              <!-- Validation / Error State Notification (Hidden by default) -->
-              <div id="view-error" class="error-banner hidden">
-                <span class="material-symbols-outlined">error</span>
-                <span id="error-message">Invalid file type. Please upload a JPG, JPEG or PNG image.</span>
-              </div>
-
-              <div class="action-bar-disabled">
-                <button type="button" class="btn-disabled" id="btn-detect-disabled" disabled>
-                  <span>DETECT HAZARDS</span>
-                  <span class="material-symbols-outlined">arrow_forward</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- STATE 2: Selected Image State -->
-            <div id="view-selected" class="view-state hidden">
-              <div class="image-preview-container">
-                <div class="badge-top-left">READY FOR ANALYSIS</div>
-                <img id="image-preview" src="" alt="Selected road image preview" class="preview-img">
-                <div class="grid-overlay" aria-hidden="true">
-                  <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
-                  <div class="grid-cell"></div><div class="grid-cell"></div><div class="grid-cell"></div>
-                </div>
-              </div>
-              
-              <div class="metadata-strip">
-                <div class="file-info">
-                  <span class="material-symbols-outlined">image</span>
-                  <span id="file-name" class="file-name">sample.jpg</span>
-                  <span class="dot-separator">&bull;</span>
-                  <span id="file-size" class="file-size">2.4 MB</span>
-                </div>
-                <div class="status-ready">
-                  <span class="material-symbols-outlined">verified</span>
-                  <span>Ready</span>
-                </div>
-              </div>
-
-              <div class="action-bar-active">
-                <button type="button" class="btn-text" id="btn-choose-different">
-                  <span class="material-symbols-outlined">sync</span>
-                  <span>Choose a different image</span>
-                </button>
-                <button type="button" class="btn-primary" id="btn-detect-action">
-                  <span>DETECT HAZARDS</span>
-                  <span class="material-symbols-outlined">arrow_forward</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- STATE 3: Analyzing State -->
-            <div id="view-analyzing" class="view-state hidden">
-              <div class="image-preview-container analyzing-overlay">
-                <img id="image-preview-analyzing" src="" alt="Analyzing road image" class="preview-img dimmed">
-                <div class="loading-spinner-container">
-                  <span class="material-symbols-outlined spinner">progress_activity</span>
-                  <span class="loading-text">ANALYZING IMAGE...</span>
-                </div>
-              </div>
-              <div class="metadata-strip analyzing-strip">
-                <div class="pulse-indicator"></div>
-                <span class="analyzing-status-text">Running YOLO11 tensor passes...</span>
-              </div>
-            </div>
-
-            <!-- STATE 3.5: API Error State -->
-            <div id="view-api-error" class="view-state hidden">
-              <div class="api-error-container">
-                <span class="material-symbols-outlined error-icon-large">error</span>
-                <h3 class="error-heading">Analysis Failed</h3>
-                <p id="api-error-message" class="error-desc">Unable to process the uploaded image.</p>
-                <div class="error-actions">
-                  <button type="button" class="btn-primary" id="btn-retry">
-                    <span>RETRY</span>
-                    <span class="material-symbols-outlined">refresh</span>
-                  </button>
-                  <button type="button" class="btn-text" id="btn-error-choose-different">
-                    <span>Choose a different image</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- STATE 4: Detection Results Header (Hidden by default) -->
-      <section id="header-results" class="section-header-results hidden">
-        <div class="results-banner">
-          <div class="status-badge">Analysis Complete</div>
-          <div id="demo-mode-notice" class="demo-notice">DEMO MODE &mdash; Backend detection is not connected yet.</div>
-          <h1 class="main-heading" id="results-main-heading">
-            <span id="total-detections-text">3</span> <span class="highlight-underline">road hazards</span> detected.
-          </h1>
-          <p class="editorial-text" id="results-editorial-text">
-            Review the identified hazards and their confidence scores below.
+            Choose your access path. Real-time hazard detection powered by computer vision.
           </p>
         </div>
 
-        <div class="results-grid">
-          <!-- Left: Image Output -->
-          <div class="results-output-card">
-            <div class="card-header dark">
-              <div class="header-left">
+        <!-- Session Expired Notice -->
+        <div id="notice-expired" class="gateway-notice gateway-notice-warn hidden" role="alert">
+          <span class="material-symbols-outlined">schedule</span>
+          <span>Your authority session has expired. Please sign in again.</span>
+        </div>
+
+        <!-- Two Panel Layout -->
+        <div class="gateway-panels">
+
+          <!-- PUBLIC ACCESS PANEL -->
+          <section class="gateway-panel" id="panel-public">
+            <div class="panel-header panel-header-dark">
+              <div class="panel-header-left">
+                <span class="indicator-dot white-dot"></span>
+                <span class="panel-title">Public Access</span>
+              </div>
+              <span class="panel-badge">No Account Required</span>
+            </div>
+            <div class="panel-body">
+              <div class="panel-content">
+                <div class="panel-meta">
+                  <span class="material-symbols-outlined"
+                    style="font-size:16px;color:var(--accent-orange);">visibility</span>
+                  <span>PUBLIC DETECTION</span>
+                </div>
+                <h2 class="panel-heading">DETECT ROAD HAZARDS. SUPPORT SAFER STREETS.</h2>
+                <p class="panel-text">
+                  Public users can upload a road image and use the hazard detection system without signing in or
+                  creating an account. The model can identify potholes, road cracks, waterlogging and construction
+                  barriers.
+                </p>
+                <div class="supported-classes">
+                  <div class="supported-classes-label">SUPPORTED HAZARD DETECTION CLASSES</div>
+                  <div class="supported-classes-grid">
+                    <span class="class-tag">Potholes</span>
+                    <span class="class-tag">Road Cracks</span>
+                    <span class="class-tag">Waterlogging</span>
+                    <span class="class-tag">Construction Barriers</span>
+                  </div>
+                </div>
+              </div>
+              <div class="panel-action-area">
+                <a href="detect.html" class="btn-primary panel-cta" id="btn-public-access">
+                  <span>CONTINUE AS PUBLIC USER →</span>
+                </a>
+                <p class="panel-action-note">Opens the public road hazard detector.</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- AUTHORITY ACCESS PANEL -->
+          <section class="gateway-panel" id="panel-authority">
+            <div class="panel-header panel-header-dark">
+              <div class="panel-header-left">
                 <span class="indicator-dot orange"></span>
-                <span>Detection Output (Simulated Visualization)</span>
+                <span class="panel-title">Authority Access</span>
               </div>
+              <span class="panel-badge panel-badge-orange">Restricted Access</span>
             </div>
-            <div class="image-result-container">
-              <img id="image-result" src="" alt="Detection result image" class="preview-img">
-              
-              <!-- Bounding boxes will be injected via JS here for real use, 
-                   but we'll keep the mock visual overlays as requested for this demo -->
-              <div class="bounding-box bbox-1" aria-label="Detected Pothole">
-                <div class="bbox-label orange-label">
-                  <span class="indicator-dot orange"></span>
-                  <span id="bbox-1-text">Pothole &middot; 92%</span>
+            <div class="panel-body">
+              <div class="panel-content">
+                <div class="panel-meta">
+                  <span class="material-symbols-outlined" style="font-size:16px;">admin_panel_settings</span>
+                  <span>MUNICIPAL OPERATIONS</span>
                 </div>
-              </div>
-              <div class="bounding-box bbox-2" aria-label="Detected Road Cracks">
-                <div class="bbox-label yellow-label">
-                  <span class="indicator-dot yellow"></span>
-                  <span id="bbox-2-text">Road Crack &middot; 87%</span>
-                </div>
-              </div>
-              <div class="bounding-box bbox-3" aria-label="Detected Construction Barrier">
-                <div class="bbox-label orange-label">
-                  <span class="indicator-dot orange"></span>
-                  <span id="bbox-3-text">Construction Barrier &middot; 81%</span>
-                </div>
-              </div>
-            </div>
-            <div class="image-metadata-strip">
-              <div class="file-name-small">
-                <span class="material-symbols-outlined">image</span>
-                <span id="result-file-name">SAMPLE.JPG</span>
-              </div>
-              <div class="analysis-complete-text">
-                <span class="indicator-dot orange pulse"></span>
-                Analysis Complete
-              </div>
-            </div>
-          </div>
+                <h2 class="panel-heading">Municipal Operations.</h2>
+                <p class="panel-text">
+                  Restricted access for authorized municipal personnel.
+                </p>
 
-          <!-- Right: Hazard Summary -->
-          <div class="hazard-summary-card">
-            <div class="card-header dark">
-              <div class="header-left">
-                <span class="indicator-dot orange"></span>
-                <span>Hazard Summary</span>
-              </div>
-            </div>
-            <div class="summary-content">
-              
-              <div class="total-metric">
-                <p class="metric-label">Total Detected</p>
-                <div class="metric-value-group">
-                  <span class="metric-big-number" id="summary-total">3</span>
-                  <span class="metric-unit">Detections</span>
-                </div>
-              </div>
+                <form id="authority-login-form" class="login-form" novalidate>
+                  <!-- Username -->
+                  <div class="form-field">
+                    <label for="login-username" class="form-label">Municipal Username</label>
+                    <input type="text" id="login-username" name="username" class="form-input"
+                      placeholder="Enter municipal username" required autocomplete="username">
+                  </div>
+                  <!-- Password -->
+                  <div class="form-field">
+                    <label for="login-password" class="form-label">Password</label>
+                    <div class="password-field">
+                      <input type="password" id="login-password" name="password" class="form-input password-input"
+                        placeholder="Enter password" required autocomplete="current-password">
+                      <button type="button" class="btn-toggle-password" id="btn-toggle-password"
+                        aria-label="Show password">
+                        <span class="material-symbols-outlined" id="pwd-icon" style="font-size:15px;">visibility</span>
+                        <span id="pwd-label">SHOW</span>
+                      </button>
+                    </div>
+                  </div>
 
-              <div class="category-counts" id="category-counts-container">
-                <!-- Injected via JS -->
-              </div>
+                  <!-- Auth Status Messages -->
+                  <div id="auth-status" class="auth-status hidden" role="alert" aria-live="polite"></div>
 
-              <div class="detection-details">
-                <p class="metric-label mb-sm">Detection Details</p>
-                <div class="details-list" id="detection-details-list">
-                  <!-- Injected via JS -->
-                </div>
+                  <!-- Sign In Button -->
+                  <div class="form-submit">
+                    <button type="submit" class="btn-primary panel-cta" id="btn-sign-in">
+                      <span id="sign-in-text">SIGN IN →</span>
+                    </button>
+                    <button type="button" class="btn-primary panel-cta signing-in-btn hidden" id="btn-signing-in"
+                      disabled>
+                      <span class="material-symbols-outlined spinner" style="font-size:18px;">progress_activity</span>
+                      <span>SIGNING IN...</span>
+                    </button>
+                  </div>
+                </form>
               </div>
+              <div class="panel-action-area panel-authority-footer">
+                <span class="panel-footer-label">Authorized Personnel Only</span>
+              </div>
+            </div>
+          </section>
 
-            </div>
-          </div>
-        </div>
+        </div><!-- /.gateway-panels -->
 
-        <div class="results-actions">
-          <button type="button" class="btn-primary btn-large" id="btn-analyse-another">
-            <span>ANALYSE ANOTHER IMAGE</span>
-            <span class="material-symbols-outlined">arrow_forward</span>
-          </button>
-          <button type="button" class="btn-secondary btn-large" id="btn-download-result">
-            <span class="material-symbols-outlined">download</span>
-            <span>DOWNLOAD RESULT</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- Bottom Specification Strip (Visible on Empty/Selected states) -->
-      <section id="hazards-spec" class="hazards-spec">
-        <div class="spec-header-row">
-          <div class="spec-tag">
-            <span class="badge-dark">SPECIFICATION 02</span>
-            <h2 class="spec-heading">HAZARDS WE DETECT</h2>
-          </div>
-        </div>
-        
-        <div class="hazards-grid">
-          <!-- Cat 1 -->
-          <div class="hazard-category">
-            <div class="hazard-top">
-              <div class="hazard-title-row">
-                <span class="cat-id">CAT-01</span>
-                <span class="material-symbols-outlined hazard-icon">landslide</span>
-              </div>
-              <h3 class="hazard-name">POTHOLES</h3>
-              <p class="hazard-desc">Holes and cavities in the road surface</p>
-            </div>
-          </div>
-          <!-- Cat 2 -->
-          <div class="hazard-category">
-            <div class="hazard-top">
-              <div class="hazard-title-row">
-                <span class="cat-id">CAT-02</span>
-                <span class="material-symbols-outlined hazard-icon">broken_image</span>
-              </div>
-              <h3 class="hazard-name">ROAD CRACKS</h3>
-              <p class="hazard-desc">Visible cracks and damaged road surfaces</p>
-            </div>
-          </div>
-          <!-- Cat 3 -->
-          <div class="hazard-category">
-            <div class="hazard-top">
-              <div class="hazard-title-row">
-                <span class="cat-id">CAT-03</span>
-                <span class="material-symbols-outlined hazard-icon">water_drop</span>
-              </div>
-              <h3 class="hazard-name">WATERLOGGING</h3>
-              <p class="hazard-desc">Standing water and flooded road areas</p>
-            </div>
-          </div>
-          <!-- Cat 4 -->
-          <div class="hazard-category">
-            <div class="hazard-top">
-              <div class="hazard-title-row">
-                <span class="cat-id">CAT-04</span>
-                <span class="material-symbols-outlined hazard-icon">traffic</span>
-              </div>
-              <h3 class="hazard-name">CONSTRUCTION BARRIERS</h3>
-              <p class="hazard-desc">Cones, drums and work-zone barriers</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      </div><!-- /#gateway-content -->
 
     </div>
   </main>
@@ -339,31 +212,150 @@
   <!-- Footer -->
   <footer class="app-footer">
     <div class="container footer-container">
-      <span class="footer-text">ROAD HAZARD DETECTION SYSTEM <span class="dot">&bull;</span> COMPUTER VISION PROJECT</span>
+      <span class="footer-text">ROAD HAZARD DETECTION SYSTEM <span class="dot">&bull;</span> COMPUTER VISION
+        PROJECT</span>
     </div>
   </footer>
 
-  <!-- Modal: How it Works -->
-  <div id="modal-how-it-works" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 id="modal-title" class="modal-title">How It Works</h2>
-        <button type="button" class="btn-icon" id="btn-close-modal" aria-label="Close modal">
-          <span class="material-symbols-outlined">close</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="video-placeholder">
-          <span class="material-symbols-outlined play-icon">play_circle</span>
-          <p>Video Placeholder (30 Sec)</p>
-        </div>
-        <p class="modal-desc">
-          The Road Hazard Detection System utilizes a YOLO11-based computer vision model to scan images for common road hazards such as potholes, cracks, waterlogging, and construction barriers. 
-        </p>
-      </div>
-    </div>
-  </div>
+  <script src="auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const sessionOverlay = document.getElementById('session-check-overlay');
+      const gatewayContent = document.getElementById('gateway-content');
+      const loginForm = document.getElementById('authority-login-form');
+      const usernameInput = document.getElementById('login-username');
+      const passwordInput = document.getElementById('login-password');
+      const btnSignIn = document.getElementById('btn-sign-in');
+      const btnSigningIn = document.getElementById('btn-signing-in');
+      const authStatus = document.getElementById('auth-status');
+      const btnTogglePassword = document.getElementById('btn-toggle-password');
+      const pwdIcon = document.getElementById('pwd-icon');
+      const pwdLabel = document.getElementById('pwd-label');
+      const noticeExpired = document.getElementById('notice-expired');
 
-  <script src="app.js"></script>
+      let isSubmitting = false;
+
+      // --- Check for expired session notice ---
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('expired') === 'true') {
+        noticeExpired.classList.remove('hidden');
+      }
+
+      // --- Initial Session Check ---
+      async function checkExistingSession() {
+        sessionOverlay.classList.remove('hidden');
+        gatewayContent.classList.add('hidden');
+
+        const result = await AuthAPI.checkSession();
+
+        if (result.authenticated) {
+          window.location.replace('admin-dashboard.html');
+          return;
+        }
+
+        // No valid session or server unavailable — show gateway
+        sessionOverlay.classList.add('hidden');
+        gatewayContent.classList.remove('hidden');
+      }
+
+      checkExistingSession();
+
+      // --- Toggle Password Visibility ---
+      btnTogglePassword.addEventListener('click', () => {
+        if (passwordInput.type === 'password') {
+          passwordInput.type = 'text';
+          pwdIcon.textContent = 'visibility_off';
+          pwdLabel.textContent = 'HIDE';
+          btnTogglePassword.setAttribute('aria-label', 'Hide password');
+        } else {
+          passwordInput.type = 'password';
+          pwdIcon.textContent = 'visibility';
+          pwdLabel.textContent = 'SHOW';
+          btnTogglePassword.setAttribute('aria-label', 'Show password');
+        }
+      });
+
+      // --- Show Auth Status ---
+      function showAuthStatus(message, type) {
+        authStatus.textContent = '';
+        const icon = document.createElement('span');
+        icon.className = 'material-symbols-outlined';
+        icon.style.fontSize = '16px';
+        icon.textContent = type === 'error' ? 'error' : 'warning';
+
+        const text = document.createElement('span');
+        text.textContent = message;
+
+        authStatus.appendChild(icon);
+        authStatus.appendChild(text);
+
+        authStatus.className = 'auth-status auth-status-' + type;
+        authStatus.classList.remove('hidden');
+      }
+
+      function hideAuthStatus() {
+        authStatus.classList.add('hidden');
+      }
+
+      // --- Set Form Disabled State ---
+      function setFormDisabled(disabled) {
+        usernameInput.disabled = disabled;
+        passwordInput.disabled = disabled;
+        btnTogglePassword.disabled = disabled;
+
+        if (disabled) {
+          btnSignIn.classList.add('hidden');
+          btnSigningIn.classList.remove('hidden');
+        } else {
+          btnSignIn.classList.remove('hidden');
+          btnSigningIn.classList.add('hidden');
+        }
+      }
+
+      // --- Login Submission ---
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        if (isSubmitting) return;
+
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value;
+
+        // Client-side empty validation only
+        if (!username || !password) {
+          showAuthStatus('Please enter both username and password.', 'error');
+          if (!username) usernameInput.focus();
+          else passwordInput.focus();
+          return;
+        }
+
+        hideAuthStatus();
+        isSubmitting = true;
+        setFormDisabled(true);
+
+        const result = await AuthAPI.login(username, password);
+
+        if (result.success) {
+          window.location.replace('admin-dashboard.html');
+          return;
+        }
+
+        // Handle errors
+        isSubmitting = false;
+        setFormDisabled(false);
+
+        if (result.error === 'invalid_credentials') {
+          showAuthStatus('Incorrect username or password. Please try again.', 'error');
+          passwordInput.value = '';
+          passwordInput.focus();
+        } else if (result.error === 'server_unavailable') {
+          showAuthStatus('The authentication service is currently unavailable. Please try again.', 'warn');
+        } else {
+          showAuthStatus('The authentication service is currently unavailable. Please try again.', 'warn');
+        }
+      });
+    });
+  </script>
 </body>
+
 </html>

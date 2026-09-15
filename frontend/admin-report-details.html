@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report Details — Road Hazard Detection</title>
+  <meta name="description" content="View and manage individual hazard detection report details in the Road Hazard Detection System.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Admin Header -->
+  <header class="app-header admin-header">
+    <div class="container header-container">
+      <a href="index.html" class="logo-group" style="text-decoration:none;color:inherit;">
+        <div class="warning-icon" aria-hidden="true">
+          <span>!</span>
+        </div>
+        <div class="title-group">
+          <span class="app-title">Road Hazard Detection</span>
+          <span class="model-badge">YOLO-BASED</span>
+        </div>
+      </a>
+
+      <nav class="admin-nav" id="admin-nav" aria-label="Admin Navigation">
+        <a href="admin-dashboard.html" class="nav-link">Dashboard</a>
+        <a href="admin-reports.html" class="nav-link active">Reports</a>
+        <a href="#" class="nav-link">About</a>
+      </nav>
+
+      <div class="admin-header-right">
+        <div class="admin-user-badge">
+          <span class="material-symbols-outlined" style="font-size:16px;">person</span>
+          <span id="admin-username" class="admin-username">Admin User</span>
+        </div>
+        <button class="btn-logout" aria-label="Logout">LOGOUT</button>
+        <button class="admin-menu-toggle" id="admin-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+      </div>
+    </div>
+    <div id="admin-mobile-nav" class="admin-mobile-nav hidden">
+      <a href="admin-dashboard.html" class="mobile-nav-link">Dashboard</a>
+      <a href="admin-reports.html" class="mobile-nav-link active">Reports</a>
+      <a href="#" class="mobile-nav-link">About</a>
+      <button class="mobile-nav-link btn-logout">Logout</button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content admin-main">
+    <div class="container">
+
+      <!-- Back nav -->
+      <div class="detail-breadcrumb">
+        <a href="admin-reports.html" class="btn-back">
+          <span class="btn-back-icon">
+            <span class="material-symbols-outlined" style="font-size:14px;">arrow_back</span>
+          </span>
+          ← BACK TO REPORTS
+        </a>
+        <span class="detail-breadcrumb-label">AUTHORITY CONTROL // REPORT REVIEW</span>
+      </div>
+
+      <!-- Loading State -->
+      <div id="detail-loading" class="admin-state-box">
+        <div class="state-icon-box">
+          <span class="material-symbols-outlined spinner" style="font-size:28px;">progress_activity</span>
+        </div>
+        <h3 class="state-title">LOADING REPORT...</h3>
+        <p class="state-desc">Fetching report details.</p>
+      </div>
+
+      <!-- Error State -->
+      <div id="detail-error" class="admin-state-box admin-state-error hidden">
+        <div class="state-icon-box state-icon-error">
+          <span class="material-symbols-outlined" style="font-size:28px;">warning</span>
+        </div>
+        <h3 class="state-title">UNABLE TO LOAD REPORT</h3>
+        <p class="state-desc">The report could not be retrieved. Please try again.</p>
+        <button class="btn-primary" id="detail-retry">
+          <span>RETRY</span>
+          <span class="material-symbols-outlined" style="font-size:16px;">refresh</span>
+        </button>
+      </div>
+
+      <!-- Report Content -->
+      <div id="detail-content" class="hidden">
+
+        <!-- Page Header -->
+        <div class="detail-page-header">
+          <div class="detail-title-row">
+            <h1 class="detail-title" id="detail-report-id">REPORT —</h1>
+            <span class="status-badge-large status-pending" id="detail-header-status">PENDING REVIEW</span>
+          </div>
+          <p class="detail-subtitle">Review the detected hazard and update its status.</p>
+        </div>
+
+        <!-- Two Column Layout -->
+        <div class="detail-grid">
+
+          <!-- LEFT: Detection Image -->
+          <div class="detail-image-panel">
+            <div class="detail-panel-card">
+              <div class="detail-panel-header">
+                <div class="detail-panel-header-left">
+                  <span class="detail-panel-dot"></span>
+                  <h2 class="detail-panel-title">DETECTION OUTPUT</h2>
+                </div>
+                <span class="detail-panel-meta">BOUNDING BOX OVERLAY</span>
+              </div>
+              <div class="detail-image-stage">
+                <div class="detail-image-container" id="detail-image-wrapper">
+                  <img id="detail-image" src="" alt="Detection image" class="detail-img">
+                  <div id="detail-bboxes" class="detail-bboxes"></div>
+                  <div class="detail-grid-overlay"></div>
+                </div>
+                <div class="detail-image-meta">
+                  <div class="detail-image-meta-item">
+                    <span class="detail-meta-label">IMAGE FILE</span>
+                    <span class="detail-meta-value" id="detail-filename">—</span>
+                  </div>
+                  <div class="detail-image-meta-item">
+                    <span class="detail-meta-label">SUBMITTED</span>
+                    <span class="detail-meta-value" id="detail-submitted">—</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT: Report Details & Actions -->
+          <div class="detail-info-panel">
+
+            <!-- Report Details -->
+            <div class="detail-panel-card">
+              <div class="detail-panel-header">
+                <div class="detail-panel-header-left">
+                  <span class="detail-panel-dot dot-orange"></span>
+                  <h2 class="detail-panel-title">REPORT DETAILS</h2>
+                </div>
+                <span class="detail-panel-meta detail-panel-id" id="detail-header-id"></span>
+              </div>
+              <div class="detail-metadata">
+                <div class="detail-meta-row">
+                  <span class="detail-meta-key">REPORT ID</span>
+                  <span class="detail-meta-val" id="detail-meta-id">—</span>
+                </div>
+                <div class="detail-meta-row">
+                  <span class="detail-meta-key">HAZARD TYPE</span>
+                  <span class="detail-meta-val" id="detail-meta-type">—</span>
+                </div>
+                <div class="detail-meta-row">
+                  <span class="detail-meta-key">CONFIDENCE</span>
+                  <div class="detail-conf-display">
+                    <div class="detail-conf-track">
+                      <div class="detail-conf-fill" id="detail-conf-bar"></div>
+                    </div>
+                    <span class="detail-meta-val" id="detail-meta-confidence">—</span>
+                  </div>
+                </div>
+                <div class="detail-meta-row">
+                  <span class="detail-meta-key">PRIORITY</span>
+                  <span class="priority-badge priority-low" id="detail-meta-priority">—</span>
+                </div>
+                <div class="detail-meta-row">
+                  <span class="detail-meta-key">STATUS</span>
+                  <span class="status-badge status-pending" id="detail-meta-status">—</span>
+                </div>
+                <div class="detail-meta-row">
+                  <span class="detail-meta-key">SUBMITTED DATE</span>
+                  <span class="detail-meta-val" id="detail-meta-date">—</span>
+                </div>
+                <div class="detail-meta-row detail-meta-row-last">
+                  <span class="detail-meta-key">LOCATION</span>
+                  <span class="detail-meta-val detail-meta-italic" id="detail-meta-location">Location not provided</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Authority Actions -->
+            <div class="detail-panel-card">
+              <div class="detail-panel-header">
+                <div class="detail-panel-header-left">
+                  <span class="detail-panel-dot"></span>
+                  <h2 class="detail-panel-title">AUTHORITY ACTIONS</h2>
+                </div>
+                <span class="detail-panel-meta">STATUS UPDATE</span>
+              </div>
+              <form class="detail-actions-form" onsubmit="event.preventDefault();">
+                <div class="detail-actions-grid">
+                  <div class="form-field">
+                    <label for="action-priority" class="form-label">PRIORITY</label>
+                    <select id="action-priority" class="form-select action-select">
+                      <option value="Low">Low</option>
+                      <option value="Medium">Medium</option>
+                      <option value="High">High</option>
+                      <option value="Critical">Critical</option>
+                    </select>
+                  </div>
+                  <div class="form-field">
+                    <label for="action-status" class="form-label">STATUS</label>
+                    <select id="action-status" class="form-select action-select">
+                      <option value="Pending Review">Pending Review</option>
+                      <option value="Verified">Verified</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Resolved">Resolved</option>
+                      <option value="Rejected">Rejected</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="form-field">
+                  <label for="action-notes" class="form-label">ADMINISTRATIVE NOTES</label>
+                  <textarea id="action-notes" class="form-textarea" rows="3" placeholder="Add notes about this report…"></textarea>
+                </div>
+                <div class="detail-action-buttons">
+                  <button type="button" class="btn-primary detail-btn-save" id="btn-save-changes">
+                    <span class="material-symbols-outlined" style="font-size:16px;">check</span>
+                    SAVE CHANGES
+                  </button>
+                  <div class="detail-quick-actions">
+                    <button type="button" class="btn-secondary detail-btn-verify" id="btn-verify">
+                      <span class="material-symbols-outlined" style="font-size:14px;color:#16a34a;">check</span>
+                      VERIFY DETECTION
+                    </button>
+                    <button type="button" class="btn-secondary detail-btn-reject" id="btn-reject">
+                      <span class="material-symbols-outlined" style="font-size:14px;color:#dc2626;">close</span>
+                      MARK AS FALSE DETECTION
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Activity Timeline -->
+        <div id="detail-activity-section" class="detail-activity-section hidden">
+          <div class="detail-panel-card">
+            <div class="detail-panel-header">
+              <div class="detail-panel-header-left">
+                <span class="detail-panel-dot"></span>
+                <h2 class="detail-panel-title">REPORT ACTIVITY</h2>
+              </div>
+              <span class="detail-panel-meta">HISTORY TIMELINE</span>
+            </div>
+            <div class="detail-activity-grid" id="detail-activity">
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /#detail-content -->
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="container footer-container">
+      <span class="footer-text">ROAD HAZARD DETECTION SYSTEM <span class="dot">&bull;</span> COMPUTER VISION PROJECT</span>
+    </div>
+  </footer>
+
+  <script src="auth.js"></script>
+  <script src="admin.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = await protectAdminPage();
+      if (user) initReportDetails(user);
+    });
+  </script>
+</body>
+</html>

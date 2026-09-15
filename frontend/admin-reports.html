@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hazard Reports — Road Hazard Detection</title>
+  <meta name="description" content="Search, filter and audit roadway hazard detection reports in the Road Hazard Detection System.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Admin Header -->
+  <header class="app-header admin-header">
+    <div class="container header-container">
+      <a href="index.html" class="logo-group" style="text-decoration:none;color:inherit;">
+        <div class="warning-icon" aria-hidden="true">
+          <span>!</span>
+        </div>
+        <div class="title-group">
+          <span class="app-title">Road Hazard Detection</span>
+          <span class="model-badge">YOLO-BASED</span>
+        </div>
+      </a>
+
+      <nav class="admin-nav" id="admin-nav" aria-label="Admin Navigation">
+        <a href="admin-dashboard.html" class="nav-link">Dashboard</a>
+        <a href="admin-reports.html" class="nav-link active">Reports</a>
+        <a href="#" class="nav-link">About</a>
+      </nav>
+
+      <div class="admin-header-right">
+        <div class="admin-user-badge">
+          <span class="material-symbols-outlined" style="font-size:16px;">person</span>
+          <span id="admin-username" class="admin-username">Admin User</span>
+        </div>
+        <button class="btn-logout" aria-label="Logout">LOGOUT</button>
+        <button class="admin-menu-toggle" id="admin-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+      </div>
+    </div>
+    <div id="admin-mobile-nav" class="admin-mobile-nav hidden">
+      <a href="admin-dashboard.html" class="mobile-nav-link">Dashboard</a>
+      <a href="admin-reports.html" class="mobile-nav-link active">Reports</a>
+      <a href="#" class="mobile-nav-link">About</a>
+      <button class="mobile-nav-link btn-logout">Logout</button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content admin-main">
+    <div class="container">
+
+      <!-- Page Header -->
+      <div class="admin-page-header reports-page-header">
+        <div>
+          <h1 class="main-heading admin-page-title">HAZARD REPORTS.</h1>
+          <p class="editorial-text">Search, filter, and audit roadway hazard detection reports.</p>
+        </div>
+      </div>
+
+      <!-- Filters Panel -->
+      <div class="filters-panel">
+        <div class="filters-top-bar"></div>
+        <div class="filters-content">
+          <div class="filters-row">
+            <div class="filter-search">
+              <span class="material-symbols-outlined filter-search-icon">search</span>
+              <input type="text" id="reports-search" class="form-input filter-search-input" placeholder="Search by report ID (e.g. RH-0104)..." aria-label="Search by report ID">
+            </div>
+            <div class="filter-selects">
+              <div class="filter-field">
+                <label for="filter-type" class="filter-label">HAZARD TYPE</label>
+                <select id="filter-type" class="form-select">
+                  <option value="ALL">All Hazards</option>
+                  <option value="Pothole">Pothole</option>
+                  <option value="Road Crack">Road Crack</option>
+                  <option value="Waterlogging">Waterlogging</option>
+                  <option value="Construction Barrier">Construction Barrier</option>
+                </select>
+              </div>
+              <div class="filter-field">
+                <label for="filter-status" class="filter-label">STATUS</label>
+                <select id="filter-status" class="form-select">
+                  <option value="ALL">All Statuses</option>
+                  <option value="Pending Review">Pending Review</option>
+                  <option value="Verified">Verified</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Resolved">Resolved</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              </div>
+              <div class="filter-field">
+                <label for="filter-priority" class="filter-label">PRIORITY</label>
+                <select id="filter-priority" class="form-select">
+                  <option value="ALL">All Priorities</option>
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                  <option value="Critical">Critical</option>
+                </select>
+              </div>
+              <div class="filter-field">
+                <label for="filter-date" class="filter-label">SUBMISSION DATE</label>
+                <select id="filter-date" class="form-select">
+                  <option value="ALL">All Time</option>
+                  <option value="24H">Last 24 Hours</option>
+                  <option value="7D">Last 7 Days</option>
+                  <option value="30D">Last 30 Days</option>
+                </select>
+              </div>
+            </div>
+            <div class="filter-actions">
+              <button class="btn-secondary btn-clear-filters" id="btn-clear-filters">CLEAR FILTERS</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="reports-state-loading" class="admin-state-box">
+        <div class="state-icon-box">
+          <span class="material-symbols-outlined spinner" style="font-size:28px;">progress_activity</span>
+        </div>
+        <h3 class="state-title">LOADING REPORTS...</h3>
+        <p class="state-desc">Fetching hazard detection records.</p>
+      </div>
+
+      <!-- Reports Table -->
+      <div id="reports-state-table" class="hidden">
+        <div class="reports-table-container">
+          <div class="table-scroll">
+            <table class="admin-table">
+              <thead>
+                <tr class="table-header-row">
+                  <th class="table-th">REPORT ID</th>
+                  <th class="table-th">THUMBNAIL</th>
+                  <th class="table-th">DETECTED HAZARD</th>
+                  <th class="table-th">CONFIDENCE</th>
+                  <th class="table-th">PRIORITY</th>
+                  <th class="table-th">STATUS</th>
+                  <th class="table-th">DATE &amp; TIME</th>
+                  <th class="table-th th-right">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody id="reports-table-body">
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <div id="reports-pagination" class="pagination hidden">
+        <div id="reports-showing-text" class="pagination-showing"></div>
+        <div class="pagination-buttons"></div>
+      </div>
+
+      <!-- Empty State -->
+      <div id="reports-state-empty" class="admin-state-box hidden">
+        <div class="state-icon-box">
+          <span class="material-symbols-outlined" style="font-size:32px;color:var(--text-muted);">search_off</span>
+        </div>
+        <h3 class="state-title">NO MATCHING RESULTS</h3>
+        <p class="state-desc">No reports match your current filters. Try adjusting your search criteria.</p>
+        <button class="btn-primary" id="reports-reset-filters">
+          <span>RESET ALL FILTERS</span>
+        </button>
+      </div>
+
+      <!-- Error State -->
+      <div id="reports-state-error" class="admin-state-box admin-state-error hidden">
+        <div class="state-icon-box state-icon-error">
+          <span class="material-symbols-outlined" style="font-size:28px;">cloud_off</span>
+        </div>
+        <h3 class="state-title">SERVICE UNAVAILABLE</h3>
+        <p class="state-desc">Unable to load hazard reports. Please try again.</p>
+        <button class="btn-primary" id="reports-retry">
+          <span>RETRY</span>
+          <span class="material-symbols-outlined" style="font-size:16px;">refresh</span>
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="container footer-container">
+      <span class="footer-text">ROAD HAZARD DETECTION SYSTEM <span class="dot">&bull;</span> COMPUTER VISION PROJECT</span>
+    </div>
+  </footer>
+
+  <script src="auth.js"></script>
+  <script src="admin.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = await protectAdminPage();
+      if (user) initReports(user);
+    });
+  </script>
+</body>
+</html>

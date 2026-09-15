@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Road Hazard Detection</title>
+  <meta name="description" content="Authority operations dashboard for the Road Hazard Detection System. View summary metrics and recent detection reports.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Admin Header -->
+  <header class="app-header admin-header">
+    <div class="container header-container">
+      <a href="index.html" class="logo-group" style="text-decoration:none;color:inherit;">
+        <div class="warning-icon" aria-hidden="true">
+          <span>!</span>
+        </div>
+        <div class="title-group">
+          <span class="app-title">Road Hazard Detection</span>
+          <span class="model-badge">YOLO-BASED</span>
+        </div>
+      </a>
+
+      <nav class="admin-nav" id="admin-nav" aria-label="Admin Navigation">
+        <a href="admin-dashboard.html" class="nav-link active">Dashboard</a>
+        <a href="admin-reports.html" class="nav-link">Reports</a>
+        <a href="#" class="nav-link">About</a>
+      </nav>
+
+      <div class="admin-header-right">
+        <div class="admin-user-badge">
+          <span class="material-symbols-outlined" style="font-size:16px;">person</span>
+          <span id="admin-username" class="admin-username">Admin User</span>
+        </div>
+        <button class="btn-logout" aria-label="Logout">LOGOUT</button>
+        <button class="admin-menu-toggle" id="admin-menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+      </div>
+    </div>
+    <!-- Mobile Nav -->
+    <div id="admin-mobile-nav" class="admin-mobile-nav hidden">
+      <a href="admin-dashboard.html" class="mobile-nav-link active">Dashboard</a>
+      <a href="admin-reports.html" class="mobile-nav-link">Reports</a>
+      <a href="#" class="mobile-nav-link">About</a>
+      <button class="mobile-nav-link btn-logout">Logout</button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content admin-main">
+    <div class="container">
+
+      <!-- Page Header -->
+      <div class="admin-page-header">
+        <div class="admin-page-meta">
+          <span class="badge-dark">AUTHORITY CONTROL</span>
+          <span class="section-label">OPERATIONS OVERVIEW</span>
+        </div>
+        <h1 class="main-heading admin-page-title">
+          ROAD <span class="highlight-box">HAZARD</span> OPERATIONS.
+        </h1>
+        <p class="editorial-text">
+          Review detected road hazards and update their operational status.
+        </p>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="summary-cards" id="dashboard-cards">
+        <div class="summary-card">
+          <div class="summary-card-header">
+            <span class="summary-card-label">TOTAL REPORTS</span>
+            <span class="material-symbols-outlined summary-card-icon">dataset</span>
+          </div>
+          <div class="summary-card-body">
+            <span class="summary-value" id="card-total">—</span>
+            <span class="summary-sub">All detection reports</span>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-header">
+            <span class="summary-card-label">PENDING REVIEW</span>
+            <span class="summary-card-indicator indicator-pending"></span>
+          </div>
+          <div class="summary-card-body">
+            <span class="summary-value" id="card-pending">—</span>
+            <span class="summary-sub">Awaiting authority review</span>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-header">
+            <span class="summary-card-label">HIGH PRIORITY</span>
+            <span class="summary-card-indicator indicator-high"></span>
+          </div>
+          <div class="summary-card-body">
+            <span class="summary-value summary-value-accent" id="card-high-priority">—</span>
+            <span class="summary-sub">Reports requiring attention</span>
+          </div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-card-header">
+            <span class="summary-card-label">RESOLVED</span>
+            <span class="summary-card-indicator indicator-resolved"></span>
+          </div>
+          <div class="summary-card-body">
+            <span class="summary-value" id="card-resolved">—</span>
+            <span class="summary-sub">Reports marked as resolved</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Reports Section -->
+      <div id="dashboard-default">
+        <div class="reports-table-container">
+          <div class="reports-table-header">
+            <div class="reports-table-title">
+              <span class="table-title-dot">■</span>
+              <span>RECENT HAZARD REPORTS</span>
+            </div>
+            <a href="admin-reports.html" class="btn-view-all">
+              <span>VIEW ALL REPORTS</span>
+              <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward</span>
+            </a>
+          </div>
+          <div class="table-scroll">
+            <table class="admin-table">
+              <thead>
+                <tr class="table-header-row">
+                  <th class="table-th">REPORT ID</th>
+                  <th class="table-th">IMAGE</th>
+                  <th class="table-th">HAZARD TYPE</th>
+                  <th class="table-th th-right">CONFIDENCE</th>
+                  <th class="table-th">PRIORITY</th>
+                  <th class="table-th">STATUS</th>
+                  <th class="table-th">SUBMITTED</th>
+                  <th class="table-th th-center">ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="dashboard-table-body">
+                <tr><td colspan="8" class="table-loading">Loading reports...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div id="dashboard-empty" class="admin-state-box hidden">
+        <div class="state-icon-box">
+          <span class="material-symbols-outlined" style="font-size:28px;">inbox</span>
+        </div>
+        <h3 class="state-title">NO REPORTS AVAILABLE</h3>
+        <p class="state-desc">Hazard reports will appear here when detection records are available.</p>
+      </div>
+
+      <!-- Error State -->
+      <div id="dashboard-error" class="admin-state-box admin-state-error hidden">
+        <div class="state-icon-box state-icon-error">
+          <span class="material-symbols-outlined" style="font-size:28px;">warning</span>
+        </div>
+        <h3 class="state-title">SERVICE UNAVAILABLE</h3>
+        <p class="state-desc">Unable to connect to the reports service. Please try again.</p>
+        <button class="btn-primary" id="dashboard-retry">
+          <span>RETRY</span>
+          <span class="material-symbols-outlined" style="font-size:16px;">refresh</span>
+        </button>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="container footer-container">
+      <span class="footer-text">ROAD HAZARD DETECTION SYSTEM <span class="dot">&bull;</span> COMPUTER VISION PROJECT</span>
+    </div>
+  </footer>
+
+  <script src="auth.js"></script>
+  <script src="admin.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const user = await protectAdminPage();
+      if (user) initDashboard(user);
+    });
+  </script>
+</body>
+</html>
