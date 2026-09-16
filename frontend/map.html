@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ROAD HAZARD MAP — Road Hazard Detection</title>
+  <meta name="description"
+    content="View active road hazards reported across the network.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet">
+  <!-- Leaflet CSS from unpkg -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="map.css">
+
+  <!-- Leaflet JS from unpkg -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+
+  <script src="map.js" defer></script>
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="container header-container">
+      <a href="index.html" class="logo-group" style="text-decoration:none;color:inherit;">
+        <div class="warning-icon" aria-hidden="true">
+          <span>!</span>
+        </div>
+        <div class="title-group">
+          <span class="app-title">Road Hazard Detection</span>
+          <span class="model-badge">YOLO-BASED</span>
+        </div>
+      </a>
+      <nav class="main-nav" aria-label="Main Navigation">
+        <a href="detect.html" class="nav-link">Detect</a>
+        <a href="map.html" class="nav-link active">Map</a>
+        <a href="index.html" class="nav-link">Authority</a>
+        <a href="#" class="nav-link">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content map-main-content">
+    <div class="container">
+      <div class="gateway-header" style="margin-bottom: 2rem;">
+        <div class="wayfinding">
+          <span class="badge-dark">HAZARD OVERVIEW</span>
+          <span class="section-label">LIVE MAP</span>
+        </div>
+        <h1 class="main-heading gateway-heading">
+          ROAD HAZARD <span class="highlight-underline">MAP</span>
+        </h1>
+        <p class="editorial-text">
+          View active road hazards reported across the network.
+        </p>
+      </div>
+
+      <div class="route-panel">
+        <h2 class="route-panel-title">PLAN A SAFER ROUTE</h2>
+        <div class="route-controls">
+          <div class="route-point-group">
+            <button id="btn-use-location" class="btn-secondary">
+              <span class="material-symbols-outlined">my_location</span>
+              USE MY LOCATION
+            </button>
+            <div class="route-coords">
+              <span class="route-coords-label">Origin:</span>
+              <span id="display-origin" class="route-coords-value">Not selected</span>
+            </div>
+          </div>
+
+          <div class="route-point-group">
+            <button id="btn-select-destination" class="btn-secondary">
+              <span class="material-symbols-outlined">pin_drop</span>
+              SELECT DESTINATION ON MAP
+            </button>
+            <div class="route-coords">
+              <span class="route-coords-label">Destination:</span>
+              <span id="display-destination" class="route-coords-value">Not selected</span>
+            </div>
+          </div>
+
+          <div class="route-actions">
+            <button id="btn-find-route" class="btn-primary" disabled style="margin-right: 0.5rem;">
+              <span class="material-symbols-outlined">route</span>
+              FIND SAFER ROUTE
+            </button>
+            <button id="btn-clear-route" class="btn-outline">
+              <span class="material-symbols-outlined">clear_all</span>
+              CLEAR ROUTE POINTS
+            </button>
+          </div>
+        </div>
+        <div id="route-status" class="route-status" aria-live="polite"></div>
+
+        <!-- Route Results Panel -->
+        <div id="route-results-panel" class="route-results hidden">
+          <div class="route-results-header">
+            <h3 class="route-results-title">Recommended Route</h3>
+            <button id="btn-show-recommended" class="btn-outline btn-small hidden" aria-label="Show recommended route">
+              SHOW RECOMMENDED ROUTE
+            </button>
+          </div>
+          <p id="route-reason" class="route-reason"></p>
+          <div class="route-metrics">
+            <div class="metric"><span class="metric-label">Distance:</span> <span id="route-distance" class="metric-value"></span></div>
+            <div class="metric"><span class="metric-label">Duration:</span> <span id="route-duration" class="metric-value"></span></div>
+            <div class="metric"><span class="metric-label">Total Hazards:</span> <span id="route-hazards" class="metric-value"></span></div>
+            <div class="metric"><span class="metric-label">Critical Hazards:</span> <span id="route-critical" class="metric-value"></span></div>
+            <div class="metric"><span class="metric-label">Risk Score:</span> <span id="route-risk" class="metric-value"></span></div>
+            <div class="metric"><span class="metric-label">Safety Weight:</span> <span id="route-weight" class="metric-value"></span></div>
+            <div class="metric"><span class="metric-label">Search Radius:</span> <span id="route-radius" class="metric-value"></span></div>
+          </div>
+
+          <div id="alternative-routes-container" class="alternative-routes">
+            <h4 class="alternative-routes-title">Alternative Routes Considered</h4>
+            <div id="alternative-routes-list" class="alternative-routes-list"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="map-controls">
+        <div id="map-status" class="map-status" aria-live="polite">Initializing map...</div>
+        <button id="refresh-hazards-btn" class="btn-primary" aria-label="Refresh hazards">
+          <span class="material-symbols-outlined">refresh</span>
+          <span>Refresh Hazards</span>
+        </button>
+      </div>
+
+      <div id="map-error" class="gateway-notice gateway-notice-error hidden" role="alert" style="margin-bottom: 1rem;">
+        <span class="material-symbols-outlined">error</span>
+        <span class="error-text">Failed to load hazards.</span>
+        <button id="retry-hazards-btn" class="btn-secondary" style="margin-left:auto;">Retry</button>
+      </div>
+
+      <div class="map-container-wrapper">
+        <div id="hazard-map" class="map-container" aria-label="Interactive map displaying road hazards"></div>
+
+        <div class="map-legend">
+          <div class="legend-section">
+            <h3 class="legend-title">Priority</h3>
+            <div class="legend-item">
+              <div class="legend-color legend-critical"></div>
+              <span>Critical</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color legend-high"></div>
+              <span>High</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color legend-medium"></div>
+              <span>Medium Priority</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color legend-low"></div>
+              <span>Low Priority</span>
+            </div>
+          </div>
+
+          <div class="legend-section">
+            <h4 class="legend-subtitle">ROUTES</h4>
+            <div class="legend-item">
+              <div class="legend-line legend-line-recommended"></div>
+              <span>Recommended</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-line legend-line-alternative"></div>
+              <span>Alternative</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+
+</html>
