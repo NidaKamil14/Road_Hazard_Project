@@ -1,5 +1,5 @@
 const CONFIG = {
-  API_BASE_URL: "http://127.0.0.1:5000",
+  API_BASE_URL: (window.location.hostname === 'localhost') ? "http://localhost:5000" : "http://127.0.0.1:5000",
   DETECT_ENDPOINT: "/detect/image?conf=0.25&iou=0.45",
   REQUEST_TIMEOUT_MS: 30000
 };
@@ -226,18 +226,44 @@ document.addEventListener('DOMContentLoaded', () => {
   btnChooseDifferent.addEventListener('click', resetToEmptyState);
   btnErrorChooseDifferent.addEventListener('click', resetToEmptyState);
 
-  // Get location helper
+  // Get location helper - strictly acquires user's current GPS coordinates
   const getCurrentLocation = () => {
     return new Promise((resolve, reject) => {
       if (!navigator.geolocation) {
-        reject(new Error("Geolocation is not supported by your browser."));
-      } else {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
+        reject(new Error("Location access is required to report a hazard. Geolocation is not supported by your browser."));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position?.coords?.latitude;
+          const lng = position?.coords?.longitude;
+          if (typeof lat !== 'number' || typeof lng !== 'number' || isNaN(lat) || isNaN(lng)) {
+            reject(new Error("Unable to obtain valid GPS coordinates from your device. Please try again."));
+            return;
+          }
+          if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+            reject(new Error("Invalid GPS coordinates received from browser."));
+            return;
+          }
+          resolve({ latitude: lat, longitude: lng });
+        },
+        (geoErr) => {
+          let msg = "Location access is required to report a hazard. Please enable location permission and try again.";
+          if (geoErr.code === 1) { // PERMISSION_DENIED
+            msg = "Location access was denied. Location permission is required to report a hazard. Please allow location access in your browser settings and try again.";
+          } else if (geoErr.code === 2) { // POSITION_UNAVAILABLE
+            msg = "Unable to determine your current location. Please ensure location services are enabled on your device and try again.";
+          } else if (geoErr.code === 3) { // TIMEOUT
+            msg = "Location request timed out. Please ensure GPS is enabled and try again.";
+          }
+          reject(new Error(msg));
+        },
+        {
           timeout: 10000,
           maximumAge: 0,
           enableHighAccuracy: true
-        });
-      }
+        }
+      );
     });
   };
 
@@ -255,17 +281,36 @@ document.addEventListener('DOMContentLoaded', () => {
     viewAnalyzing.classList.remove('hidden');
     viewAnalyzing.classList.add('active');
 
+    const analyzingStatusText = document.querySelector('.analyzing-status-text');
+    if (analyzingStatusText) analyzingStatusText.textContent = 'Requesting device GPS location...';
+
+    // 1. Strictly obtain the user's browser GPS coordinates.
+    // NEVER fall back to hardcoded coordinates. If location fails, abort and report error.
+    let userCoords;
     try {
-      let position;
-      try {
-        position = await getCurrentLocation();
-      } catch (geoErr) {
-        throw new Error('Location access is required to submit a hazard report. Please allow location access and try again.');
+      userCoords = await getCurrentLocation();
+    } catch (locErr) {
+      isProcessing = false;
+      viewAnalyzing.classList.remove('active');
+      viewAnalyzing.classList.add('hidden');
+
+      const errorMessage = document.getElementById('api-error-message');
+      if (errorMessage) {
+        errorMessage.textContent = locErr.message || 'Location access is required to report a hazard. Please enable location permission and try again.';
       }
+      viewApiError.classList.remove('hidden');
+      viewApiError.classList.add('active');
+      return;
+    }
 
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
+    const latitude = userCoords.latitude;
+    const longitude = userCoords.longitude;
 
+    if (analyzingStatusText) {
+      analyzingStatusText.textContent = `Report location: ${latitude.toFixed(6)}, ${longitude.toFixed(6)} — Analyzing image...`;
+    }
+
+    try {
       const responseData = await detectHazards(currentFile);
       const saveResults = await saveHazardsToDatabase(responseData, latitude, longitude);
 
@@ -273,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // is now the authoritative visual output.
       revokePreviewUrl();
 
-      showResults(responseData, saveResults);
+      showResults(responseData, saveResults, latitude, longitude);
 
     } catch (err) {
       // Restore processing flag and show error
@@ -369,7 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   const saveHazardsToDatabase = async (responseData, latitude, longitude) => {
     const detections = responseData.detections || [];
-    if (detections.length === 0) return { attempted: 0, successful: 0 };
+    if (detections.length === 0) return { attempted: 0, successful: 0, hazards: [] };
 
     const promises = detections.map(det => {
       const payload = {
@@ -390,20 +435,34 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify(payload)
       }).then(res => {
         if (!res.ok) throw new Error("Database save failed");
-        return res;
+        return res.json();
       });
     });
 
     const results = await Promise.allSettled(promises);
     const successful = results.filter(r => r.status === 'fulfilled').length;
+    const savedHazards = results.map(r => r.status === 'fulfilled' ? r.value : null);
 
-    return { attempted: detections.length, successful: successful };
+    // Merge backend-calculated severity & priority back into detection items
+    detections.forEach((det, idx) => {
+      det.latitude = latitude;
+      det.longitude = longitude;
+      if (savedHazards[idx]) {
+        det.severity = savedHazards[idx].severity;
+        det.priority_score = savedHazards[idx].priority_score;
+        det.priority_level = savedHazards[idx].priority_level;
+        det.priority_reason = savedHazards[idx].priority_reason;
+        det.saved_id = savedHazards[idx].id;
+      }
+    });
+
+    return { attempted: detections.length, successful: successful, hazards: savedHazards };
   };
 
   /**
    * Transitions to the results view using the real backend DetectionResponse.
    */
-  const showResults = (responseData, saveResults) => {
+  const showResults = (responseData, saveResults, latitude, longitude) => {
     viewAnalyzing.classList.remove('active');
     viewAnalyzing.classList.add('hidden');
 
@@ -426,13 +485,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (banner) banner.insertBefore(saveNotice, banner.children[1] || banner.firstChild);
     }
 
+    const locFormatted = (typeof latitude === 'number' && typeof longitude === 'number')
+      ? `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
+      : 'User GPS';
+
     if (saveResults && saveResults.attempted > 0) {
         if (saveResults.successful === saveResults.attempted) {
-            saveNotice.textContent = `All ${saveResults.successful} hazard(s) successfully saved to database.`;
+            saveNotice.textContent = `All ${saveResults.successful} hazard(s) saved to database at Report Location: ${locFormatted}`;
             saveNotice.style.backgroundColor = 'var(--success-color, #10b981)';
             saveNotice.style.color = '#fff';
         } else {
-            saveNotice.textContent = `Warning: Only ${saveResults.successful} of ${saveResults.attempted} hazards were saved.`;
+            saveNotice.textContent = `Warning: Only ${saveResults.successful} of ${saveResults.attempted} hazards saved at Report Location: ${locFormatted}`;
             saveNotice.style.backgroundColor = 'var(--warning-color, #f59e0b)';
             saveNotice.style.color = '#fff';
         }
@@ -452,13 +515,13 @@ document.addEventListener('DOMContentLoaded', () => {
       imageResult.alt = 'No annotated image was returned by the server.';
     }
 
-    populateResultsData(responseData);
+    populateResultsData(responseData, latitude, longitude);
   };
 
   /**
    * Populates counts and detail cards from the real DetectionResponse object.
    */
-  const populateResultsData = (responseData) => {
+  const populateResultsData = (responseData, latitude, longitude) => {
     const detections = responseData.detections || [];
     const totalDetections = responseData.total_detections;
 
@@ -540,8 +603,35 @@ document.addEventListener('DOMContentLoaded', () => {
       const titleSpan = document.createElement('span');
       titleSpan.className = 'detail-title';
       titleSpan.textContent = displayName;
-
       infoDiv.appendChild(titleSpan);
+
+      // Bounding box coordinates (Image Pixel Coordinates)
+      if (det.bounding_box) {
+        const bboxSpan = document.createElement('span');
+        bboxSpan.className = 'detail-sub';
+        bboxSpan.textContent = `Image BBox: [${det.bounding_box.x1}, ${det.bounding_box.y1}, ${det.bounding_box.x2}, ${det.bounding_box.y2}]`;
+        infoDiv.appendChild(bboxSpan);
+      }
+
+      // User GPS Coordinates (Report Location)
+      if (typeof latitude === 'number' && typeof longitude === 'number') {
+        const locSpan = document.createElement('span');
+        locSpan.className = 'detail-sub';
+        locSpan.textContent = `Report GPS: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+        infoDiv.appendChild(locSpan);
+      }
+
+      // Severity and Priority from authoritative backend calculations
+      if (det.severity || det.priority_level) {
+        const metaSpan = document.createElement('span');
+        metaSpan.className = 'detail-sub';
+        const parts = [];
+        if (det.severity) parts.push(`Severity: ${det.severity}`);
+        if (det.priority_level) parts.push(`Priority: ${det.priority_level} (${det.priority_score})`);
+        metaSpan.textContent = parts.join(' · ');
+        infoDiv.appendChild(metaSpan);
+      }
+
       leftDiv.appendChild(dot);
       leftDiv.appendChild(infoDiv);
 

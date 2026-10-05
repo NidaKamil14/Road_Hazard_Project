@@ -55,7 +55,7 @@ Configure your PostgreSQL credentials in `backend/.env`:
 
 ```dotenv
 DATABASE_URL=postgresql+psycopg://postgres:YOUR_PASSWORD@localhost:5432/road_hazard_db
-MODEL_PATH=runs/detect/experiment2_yolo11s_800/weights/best.pt
+MODEL_PATH=runs/detect/experiment3_yolo11s_800/weights/best.pt
 ```
 
 *(Note: Never commit your actual database password to version control).*
@@ -93,12 +93,12 @@ This script:
 Start FastAPI with Uvicorn:
 
 ```bash
-uvicorn backend.main:app --host 127.0.0.1 --port 8000 --reload
+uvicorn backend.main:app --host 127.0.0.1 --port 5000 --reload
 ```
 
-- **Interactive Swagger Documentation:** [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-- **ReDoc Documentation:** [http://127.0.0.1:8000/redoc](http://127.0.0.1:8000/redoc)
-- **Health Check:** [http://127.0.0.1:8000/health](http://127.0.0.1:8000/health)
+- **Interactive Swagger Documentation:** [http://127.0.0.1:5000/docs](http://127.0.0.1:5000/docs)
+- **ReDoc Documentation:** [http://127.0.0.1:5000/redoc](http://127.0.0.1:5000/redoc)
+- **Health Check:** [http://127.0.0.1:5000/health](http://127.0.0.1:5000/health)
 
 ---
 
@@ -122,7 +122,7 @@ Returns model operational status, compute device, active classes, and database c
 {
   "status": "ok",
   "model": "YOLO11s",
-  "model_path": "F:\\Road_Hazards\\runs\\detect\\experiment2_yolo11s_800\\weights\\best.pt",
+  "model_path": "F:\\Road_Hazards\\runs\\detect\\experiment3_yolo11s_800\\weights\\best.pt",
   "device": "cuda:0 (NVIDIA RTX PRO 2000 Blackwell)",
   "classes": [
     "pothole",
@@ -154,7 +154,7 @@ Stores a detected road hazard with PostGIS spatial location, automated or explic
 
 **Example Request:**
 ```bash
-curl -X POST http://127.0.0.1:8000/hazards \
+curl -X POST http://127.0.0.1:5000/hazards \
   -H "Content-Type: application/json" \
   -d '{
     "hazard_type": "pothole",
@@ -263,7 +263,7 @@ Update workflow lifecycle status between `"active"` and `"resolved"`.
 
 **Example Request:**
 ```bash
-curl -X PATCH http://127.0.0.1:8000/hazards/1/status \
+curl -X PATCH http://127.0.0.1:5000/hazards/1/status \
   -H "Content-Type: application/json" \
   -d '{"status": "resolved"}'
 ```
@@ -282,7 +282,7 @@ Evaluates candidate driving routes from OSRM against active road hazards in Post
 
 **Example Request:**
 ```bash
-curl -X POST http://127.0.0.1:8000/route/recommend \
+curl -X POST http://127.0.0.1:5000/route/recommend \
   -H "Content-Type: application/json" \
   -d '{
     "origin": {"latitude": 18.5204, "longitude": 73.8567},

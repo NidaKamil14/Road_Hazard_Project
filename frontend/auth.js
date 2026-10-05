@@ -11,7 +11,7 @@
  */
 
 const AUTH_CONFIG = {
-  API_BASE_URL: "http://localhost:5000",
+  API_BASE_URL: (window.location.hostname === 'localhost') ? "http://localhost:5000" : "http://127.0.0.1:5000",
   ENDPOINTS: {
     LOGIN:   "/api/auth/login",
     SESSION: "/api/auth/session",

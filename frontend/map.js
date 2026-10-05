@@ -1,6 +1,6 @@
 // frontend/map.js
 
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = (window.location.hostname === 'localhost') ? "http://localhost:5000" : "http://127.0.0.1:5000";
 
 let map;
 let hazardLayerGroup;
@@ -23,12 +23,17 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function initializeMap() {
-    // Neutral India-wide initial centre as a fallback viewport
-    const fallbackCenterLat = 21.1458;
-    const fallbackCenterLng = 79.0882;
-    const fallbackZoom = 5;
+    const params = new URLSearchParams(window.location.search);
+    const urlLat = parseFloat(params.get('lat'));
+    const urlLng = parseFloat(params.get('lng'));
+    const hasUrlCoords = !isNaN(urlLat) && !isNaN(urlLng) && isValidCoordinate(urlLat, urlLng);
 
-    map = L.map('hazard-map').setView([fallbackCenterLat, fallbackCenterLng], fallbackZoom);
+    // Neutral India-wide initial centre as fallback, or specific hazard coordinates from URL
+    const initialCenterLat = hasUrlCoords ? urlLat : 21.1458;
+    const initialCenterLng = hasUrlCoords ? urlLng : 79.0882;
+    const initialZoom = hasUrlCoords ? 16 : 5;
+
+    map = L.map('hazard-map').setView([initialCenterLat, initialCenterLng], initialZoom);
 
     // Keep Leaflet attribution visible as required by adding OpenStreetMap tiles
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -136,7 +141,24 @@ function processHazardData(hazards) {
             addHazardGroupMarker(group);
         });
 
-        fitMapToMarkers();
+        const params = new URLSearchParams(window.location.search);
+        const urlLat = parseFloat(params.get('lat'));
+        const urlLng = parseFloat(params.get('lng'));
+        const hasUrlCoords = !isNaN(urlLat) && !isNaN(urlLng) && isValidCoordinate(urlLat, urlLng);
+
+        if (!hasUrlCoords) {
+            fitMapToMarkers();
+        } else {
+            // Automatically open popup for marker matching URL coordinates
+            hazardLayerGroup.eachLayer(layer => {
+                if (layer.getLatLng) {
+                    const ll = layer.getLatLng();
+                    if (Math.abs(ll.lat - urlLat) < 0.001 && Math.abs(ll.lng - urlLng) < 0.001) {
+                        layer.openPopup();
+                    }
+                }
+            });
+        }
     }
 }
 

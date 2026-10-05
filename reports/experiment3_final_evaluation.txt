@@ -1,0 +1,159 @@
+================================================================================
+EXPERIMENT 3 FINAL EVALUATION REPORT
+Road Hazard Intelligence System
+================================================================================
+
+EVALUATION METADATA:
+Model Architecture:       YOLO11s
+Model Checkpoint Used:    F:\Road_Hazards\runs\detect\experiment3_yolo11s_800\weights\best.pt
+Dataset Configuration:    F:\Road_Hazards\Datasets\experiment3_dataset\merged_dataset\data.yaml
+Input Image Size:         800 x 800
+Total Dataset Images:     53,521 (Train: 37,778 | Val: 7,973 | Test: 7,770)
+Total Bounding Boxes:     92,270
+Validation Set Size:      7,973 images (13,548 boxes)
+Untouched Test Set Size:  7,770 images (13,201 boxes)
+
+================================================================================
+1. RESULTS.CSV ANALYSIS & BEST EPOCH IDENTIFICATION
+================================================================================
+Source Log File:          F:\Road_Hazards\runs\detect\experiment3_yolo11s_800\results.csv
+Total Epochs Run:         100 / 100
+
+A. Best Epoch by mAP50:
+   - Epoch:               100
+   - Precision:           79.01% (0.79013)
+   - Recall:              69.03% (0.69026)
+   - mAP50:               73.05% (0.73046)
+   - mAP50-95:            49.67% (0.49674)
+
+B. Best Epoch by mAP50-95:
+   - Epoch:               100
+   - Precision:           79.01% (0.79013)
+   - Recall:              69.03% (0.69026)
+   - mAP50:               73.05% (0.73046)
+   - mAP50-95:            49.67% (0.49674)
+
+C. Summary:
+   Both mAP50 and mAP50-95 peak at Epoch 100.
+   - Precision at best epoch: 79.01%
+   - Recall at best epoch:    69.03%
+   - mAP50 at best epoch:     73.05%
+   - mAP50-95 at best epoch:  49.67%
+
+================================================================================
+2. EXPERIMENT 3 OVERALL EVALUATION ON BEST.PT
+================================================================================
+Split                 Precision     Recall        mAP50         mAP50-95
+--------------------------------------------------------------------------------
+Validation Set        79.09%        69.08%        73.12%        49.79%
+Untouched Test Set    78.73%        68.57%        73.14%        49.62%
+
+================================================================================
+3. EXPERIMENT 3 PER-CLASS EVALUATION RESULTS
+================================================================================
+
+A. VALIDATION SPLIT (7,973 images):
+Class Name             Precision     Recall        mAP50         mAP50-95
+--------------------------------------------------------------------------------
+pothole                65.61%        43.42%        50.01%        22.64%
+road_crack             68.44%        58.79%        64.37%        34.75%
+waterlogging           98.47%        99.01%        99.19%        92.62%
+construction_barrier   83.85%        75.11%        78.92%        49.16%
+
+B. UNTOUCHED TEST SPLIT (7,770 images):
+Class Name             Precision     Recall        mAP50         mAP50-95
+--------------------------------------------------------------------------------
+pothole                63.65%        43.74%        50.86%        22.98%
+road_crack             68.17%        58.97%        64.69%        35.03%
+waterlogging           98.31%        98.93%        99.39%        92.64%
+construction_barrier   84.80%        72.65%        77.64%        47.82%
+
+================================================================================
+4. COMPARISON: EXPERIMENT 2 VS. EXPERIMENT 3
+================================================================================
+
+A. OVERALL METRIC COMPARISON (TEST SET):
+Metric          | Experiment 2 | Experiment 3 | Change
+----------------|--------------|--------------|--------
+Precision       | 62.49%       | 78.73%       | +16.25%
+Recall          | 54.25%       | 68.57%       | +14.32%
+mAP50           | 53.25%       | 73.14%       | +19.89%
+mAP50-95        | 32.52%       | 49.62%       | +17.10%
+
+B. OVERALL METRIC COMPARISON (VALIDATION SET):
+Metric          | Experiment 2 | Experiment 3 | Change
+----------------|--------------|--------------|--------
+Precision       | 69.43%       | 79.09%       | +9.66%
+Recall          | 60.08%       | 69.08%       | +9.00%
+mAP50           | 63.47%       | 73.12%       | +9.65%
+mAP50-95        | 36.60%       | 49.79%       | +13.19%
+
+C. PER-CLASS TEST SET mAP50 COMPARISON:
+Class                  | Exp 2        | Exp 3        | Change
+-----------------------|--------------|--------------|--------
+pothole                | 44.41%       | 50.86%       | +6.45%
+road_crack             | 50.34%       | 64.69%       | +14.35%
+waterlogging           | 81.09%       | 99.39%       | +18.30%
+construction_barrier   | 37.18%       | 77.64%       | +40.46%
+
+D. PER-CLASS TEST SET mAP50-95 COMPARISON:
+Class                  | Exp 2        | Exp 3        | Change
+-----------------------|--------------|--------------|--------
+pothole                | 20.43%       | 22.98%       | +2.55%
+road_crack             | 24.31%       | 35.03%       | +10.71%
+waterlogging           | 69.78%       | 92.64%       | +22.86%
+construction_barrier   | 15.56%       | 47.82%       | +32.25%
+
+E. PER-CLASS TEST SET PRECISION COMPARISON:
+Class                  | Exp 2        | Exp 3        | Change
+-----------------------|--------------|--------------|--------
+pothole                | 47.99%       | 63.65%       | +15.67%
+road_crack             | 59.37%       | 68.17%       | +8.80%
+waterlogging           | 100.00%      | 98.31%       | -1.69%
+construction_barrier   | 42.59%       | 84.80%       | +42.21%
+
+F. PER-CLASS TEST SET RECALL COMPARISON:
+Class                  | Exp 2        | Exp 3        | Change
+-----------------------|--------------|--------------|--------
+pothole                | 48.31%       | 43.74%       | -4.57%
+road_crack             | 47.50%       | 58.97%       | +11.48%
+waterlogging           | 63.69%       | 98.93%       | +35.24%
+construction_barrier   | 57.49%       | 72.65%       | +15.16%
+
+================================================================================
+5. SPECIFIC DETERMINATION: WATERLOGGING & CONSTRUCTION BARRIER
+================================================================================
+Objective: Determine whether waterlogging and construction_barrier detection
+improved after increasing their dataset sizes.
+
+1. WATERLOGGING:
+   - Dataset Scale Change: Expanded from 6,000 to 12,230 images (9,145 instances).
+   - Test mAP50:           81.09% -> 99.39% (+18.30%)
+   - Test mAP50-95:        69.78% -> 92.64% (+22.86%)
+   - Test Recall:          63.69% -> 98.93% (+35.24%)
+   - Measured Finding:     YES, waterlogging detection improved substantially.
+                           Test mAP50 gained +18.30% (reaching 99.39%),
+                           Test mAP50-95 gained +22.86% (reaching 92.64%), and
+                           Test Recall gained +35.24% (from 63.69% to 98.93%).
+
+2. CONSTRUCTION BARRIER:
+   - Dataset Scale Change: Expanded to 5,390 images (28,123 instances) from ROADWork.
+   - Test mAP50:           37.18% -> 77.64% (+40.46%)
+   - Test mAP50-95:        15.56% -> 47.82% (+32.25%)
+   - Test Precision:       42.59% -> 84.80% (+42.21%)
+   - Test Recall:          57.49% -> 72.65% (+15.16%)
+   - Measured Finding:     YES, construction barrier detection improved dramatically.
+                           Test mAP50 gained +40.46% (more than doubling from 37.18% to 77.64%),
+                           Test mAP50-95 gained +32.26% (more than tripling from 15.56% to 47.82%),
+                           Test Precision gained +42.21% (from 42.59% to 84.80%), and
+                           Test Recall gained +15.16% (from 57.49% to 72.65%).
+
+================================================================================
+6. SAVED ARTIFACTS AND OUTPUT PATHS
+================================================================================
+- Final Evaluation Report:  F:\Road_Hazards\reports\experiment3_final_evaluation.txt
+- Raw Metrics JSON:         F:\Road_Hazards\reports\experiment3_raw_evaluation.json
+- Training Results Log:     F:\Road_Hazards\runs\detect\experiment3_yolo11s_800\results.csv
+- Model Checkpoint (best):  F:\Road_Hazards\runs\detect\experiment3_yolo11s_800\weights\best.pt
+- Metrics Summary:          F:\Road_Hazards\runs\detect\experiment3_yolo11s_800\metrics_summary.json
+================================================================================

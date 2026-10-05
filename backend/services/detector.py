@@ -23,7 +23,7 @@ class RoadHazardDetector:
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
         "runs",
         "detect",
-        "experiment2_yolo11s_800",
+        "experiment3_yolo11s_800",
         "weights",
         "best.pt",
     )

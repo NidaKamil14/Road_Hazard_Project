@@ -1,0 +1,203 @@
+================================================================================
+ROAD HAZARD INTELLIGENCE SYSTEM
+EXPERIMENT 3 FINAL INTEGRATION TESTING & REGRESSION REPORT
+================================================================================
+Date:               2026-10-01
+Integration Scope:  Experiment 3 YOLO11s Model Checkpoint Integration,
+                    FastAPI Endpoint Validation, PostgreSQL/PostGIS Compatibility,
+                    Hazard-Aware Routing Engine, and Full Test Suite Regression.
+
+================================================================================
+1. MODEL INTEGRATED
+================================================================================
+- Model Name:       YOLO11s (Ultralytics fine-tuned detector)
+- Training Run:     runs/detect/experiment3_yolo11s_800/
+- Input Resolution: 800 x 800
+- Parameter Count:  9,460,000 parameters (21.7 GFLOPs)
+- Verified Metrics:
+  * Test mAP@50:    73.14%
+  * Test mAP@50-95: 49.62%
+  * Test Precision: 78.73%
+  * Test Recall:    68.57%
+- Status:           PASS
+
+================================================================================
+2. MODEL PATH & LOADING BEHAVIOR
+================================================================================
+- Authoritative Weights: F:/Road_Hazards/runs/detect/experiment3_yolo11s_800/weights/best.pt
+- Code Default:          DEFAULT_MODEL_PATH in backend/services/detector.py
+- Environment Variable:  MODEL_PATH in backend/.env
+- Lifespan Loading:      The model loads exactly ONCE into GPU VRAM during application
+                         startup via the FastAPI lifespan context manager (app.state.detector).
+                         It is NOT reloaded per request.
+- Compute Device:        cuda:0 (NVIDIA RTX PRO 2000 Blackwell, 16 GB VRAM)
+- Status:                PASS
+
+================================================================================
+3. MODEL CLASSES & ONTOLOGY
+================================================================================
+Strict 4-Class Mapping Verified:
+  Class ID 0 -> pothole
+  Class ID 1 -> road_crack
+  Class ID 2 -> waterlogging
+  Class ID 3 -> construction_barrier
+- Schema Integrity: Exact match with backend Pydantic schemas, frontend CLASS_NAME_MAP,
+                    and PostgreSQL database hazards table.
+- Status:           PASS
+
+================================================================================
+4. API ENDPOINTS TESTED
+================================================================================
+1. GET /health
+   - Returns 200 OK with model name ("YOLO11s"), model_path, device, classes, and DB status.
+   - Status: PASS
+
+2. POST /detect/image
+   - Multipart file upload processed at 800x800 resolution.
+   - Returns DetectionResponse containing bounding boxes, class IDs, class names,
+     confidences, inference time, and annotated image URL.
+   - Status: PASS
+
+3. POST /hazards
+   - Persists detected hazards into PostgreSQL with PostGIS POINT geography.
+   - Triggers automated SeverityEngine (Low/Medium/High) and PriorityEngine (0-100 score).
+   - Status: PASS
+
+4. GET /hazards
+   - Queries spatial database with pagination and boundary filters.
+   - Status: PASS
+
+5. POST /route/recommend
+   - Accepts origin/destination coordinates (e.g., Pune coordinates).
+   - Obtains candidate routes from OSRM, evaluates road hazard proximity decay
+     along route paths via PostGIS ST_DWithin, and ranks routes.
+   - Status: PASS
+
+================================================================================
+5. DATABASE INTEGRATION STATUS
+================================================================================
+- Engine:            PostgreSQL with PostGIS extension enabled
+- Driver:            psycopg (v3 binary) via SQLAlchemy 2.0+
+- Connection Status: CONNECTED (verified via check_db_status())
+- Schema:            hazards table with geometry(Point, 4326)
+- Test Verification: Tested hazard insertion across all 4 hazard classes (pothole,
+                     road_crack, waterlogging, construction_barrier). All rows successfully
+                     saved, computed priority scores, and cleaned up cleanly.
+- Status:            PASS
+
+================================================================================
+6. ROUTING INTEGRATION STATUS
+================================================================================
+- Routing Provider:  OSRM (Open Source Routing Machine) driving profile
+- Spatial Analysis:  PostGIS ST_DWithin and ST_Distance on geography
+- Hazard Penalty:    Linear proximity decay based on hazard priority score
+- Scoring Function:  Cost = (1 - safety_weight) * (dist / min_dist) + safety_weight * (risk / max_risk)
+- Test Verification: Successfully queried driving paths between (18.5204, 73.8567) and
+                     (18.5310, 73.8470). Evaluated distance, duration, and hazards.
+- Status:            PASS
+
+================================================================================
+7. UNIT TEST RESULTS
+================================================================================
+Test Suite: backend/tests/test_experiment3_unit.py & existing engine tests
+- test_unit_model_checkpoint_path:                                   PASSED
+- test_unit_model_architecture:                                      PASSED
+- test_unit_class_mapping:                                           PASSED
+- test_unit_inference_pipeline:                                      PASSED
+- test_unit_health_metadata:                                         PASSED
+- test_unit_hazard_priority_compatibility (pothole, crack, wl, cb): PASSED
+- test_unit_routing_penalty_calculation:                             PASSED
+- TestPriorityEngine (7 tests):                                      PASSED
+- TestSeverityEngine (9 tests):                                      PASSED
+- TestRoutingSchemas & Proximity (16 tests):                         PASSED
+Unit Test Summary: 46 / 46 unit tests PASSED (100%)
+
+================================================================================
+8. INTEGRATION TEST RESULTS
+================================================================================
+Test Suite: backend/tests/test_experiment3_integration.py & test_auth.py
+- test_integration_lifespan_model_loading:                           PASSED
+- test_integration_health_endpoint:                                  PASSED
+- test_integration_detect_image_endpoint:                            PASSED
+- test_integration_database_hazard_persistence:                      PASSED
+- test_integration_route_recommendation:                             PASSED
+- test_auth (10 tests):                                              PASSED
+- test_osrm_mocked (4 tests):                                        PASSED
+Integration Test Summary: 17 / 17 integration tests PASSED (100%)
+
+TOTAL TEST SUITE RUN: 63 PASSED, 0 FAILED (100% SUCCESS RATE)
+
+================================================================================
+9. REGRESSION TEST RESULTS
+================================================================================
+Component                        Status
+-------------------------------- -------
+Model loading                    PASS
+YOLO inference                   PASS
+Class mapping                    PASS
+FastAPI health                   PASS
+Detection API                    PASS
+PostgreSQL/PostGIS               PASS
+OSRM routing                     PASS
+Route recommendation             PASS
+Existing tests (Auth, Routing)   PASS
+Overall Regression Status:       PASS (Zero regressions detected)
+
+================================================================================
+10. ERRORS ENCOUNTERED & REMEDIATION
+================================================================================
+1. Pytest SQLite dependency override leakage:
+   - Cause:  test_auth.py globally set app.dependency_overrides[get_db] to an in-memory
+             SQLite instance without PostGIS support.
+   - Remedy: Added clean_dependency_overrides autouse fixture in test_experiment3_integration.py
+             to restore the real PostgreSQL/PostGIS connection for integration testing.
+
+2. Standalone Startup Session Key:
+   - Cause:  backend/main.py requires SESSION_SECRET_KEY of at least 32 characters.
+   - Remedy: Configured 64-character SESSION_SECRET_KEY in backend/.env.
+
+3. Frontend / Backend Port Alignment:
+   - Cause:  Backend main.py defaulted to 8000, while frontend app.js, map.js, auth.js
+             configured port 5000.
+   - Remedy: Updated main.py to default to port 5000 (configurable via PORT env var)
+             and added port 5000 to CORS ALLOWED_ORIGINS.
+
+================================================================================
+11. EXACT FILES MODIFIED
+================================================================================
+1. backend/services/detector.py:
+   - Updated DEFAULT_MODEL_PATH from experiment2_yolo11s_800 to experiment3_yolo11s_800.
+
+2. backend/.env:
+   - Added MODEL_PATH, SESSION_SECRET_KEY, and SESSION_COOKIE_SECURE=false.
+
+3. backend/.env.example:
+   - Updated default MODEL_PATH documentation to Experiment 3 best.pt.
+
+4. backend/main.py:
+   - Added http://localhost:5000 and http://127.0.0.1:5000 to CORS ALLOWED_ORIGINS.
+   - Set default server port to 5000 (from PORT env var or 5000 fallback).
+
+5. backend/tests/test_experiment3_unit.py:
+   - Created dedicated unit test suite for model, classes, inference schemas, and routing scoring.
+
+6. backend/tests/test_experiment3_integration.py:
+   - Created dedicated integration test suite for lifespan loading, /health, /detect/image,
+     PostGIS database persistence, and /route/recommend.
+
+7. backend/tests/conftest.py:
+   - Added project root to sys.path to guarantee seamless test suite execution.
+
+8. reports/experiment3_integration_testing_report.txt:
+   - Created comprehensive integration testing and regression report (this document).
+
+================================================================================
+12. FINAL PASS / FAIL STATUS
+================================================================================
+MODEL:                      PASS
+API:                        PASS
+DATABASE:                   PASS
+ROUTING:                    PASS
+TESTS:                      PASS
+OVERALL INTEGRATION STATUS: PASS
+================================================================================

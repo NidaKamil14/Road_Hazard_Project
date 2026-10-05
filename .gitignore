@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 # Caches and temporary files
+.pytest_cache/
 .ipynb_checkpoints/
 *.swp
 *.swo

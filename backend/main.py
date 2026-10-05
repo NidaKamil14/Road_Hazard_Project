@@ -75,12 +75,16 @@ app = FastAPI(
 ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:5000",
+    "http://127.0.0.1:5000",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
     "http://localhost:8001",
     "http://127.0.0.1:8001",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
 ]
 
 app.add_middleware(
@@ -241,5 +245,5 @@ async def detect_image(
 
 if __name__ == "__main__":
     import uvicorn
-
-    uvicorn.run("backend.main:app", host="127.0.0.1", port=8000, reload=True)
+    port = int(os.environ.get("PORT", 5000))
+    uvicorn.run("backend.main:app", host="127.0.0.1", port=port, reload=True)

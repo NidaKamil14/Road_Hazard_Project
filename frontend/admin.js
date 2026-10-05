@@ -12,7 +12,7 @@
  */
 
 const ADMIN_CONFIG = {
-  API_BASE_URL: "http://localhost:5000",
+  API_BASE_URL: (window.location.hostname === 'localhost') ? "http://localhost:5000" : "http://127.0.0.1:5000",
   ENDPOINTS: {
     HAZARDS: "/hazards",
     HAZARD_DETAIL: "/hazards/",
@@ -395,7 +395,11 @@ async function initDashboard(user) {
             }
           </div>
         </td>
-        <td class="table-cell cell-type">${escapeHtml(report.hazard_type || '—')}</td>
+        <td class="table-cell cell-type">
+          <div>${escapeHtml(report.hazard_type || '—')}</div>
+          ${(report.latitude !== undefined && report.longitude !== undefined) ?
+            `<div class="cell-time" style="font-size:11px;color:var(--text-muted);font-family:monospace;">${report.latitude.toFixed(5)}, ${report.longitude.toFixed(5)}</div>` : ''}
+        </td>
         <td class="table-cell cell-conf">${escapeHtml(conf)}</td>
         <td class="table-cell cell-priority"><span class="priority-badge ${getPriorityClass(report.priority_level)}">${escapeHtml((report.priority_level || '—').toUpperCase())}</span></td>
         <td class="table-cell cell-status"><span class="status-badge ${getStatusClass(report.status)}">${escapeHtml((report.status || '—').toUpperCase())}</span></td>
@@ -564,7 +568,11 @@ async function initReports(user) {
               }
             </div>
           </td>
-          <td class="table-cell cell-type"><div class="cell-type-name">${escapeHtml(report.hazard_type || '—')}</div></td>
+          <td class="table-cell cell-type">
+            <div class="cell-type-name">${escapeHtml(report.hazard_type || '—')}</div>
+            ${(report.latitude !== undefined && report.longitude !== undefined) ?
+              `<div class="cell-time" style="font-size:11px;color:var(--text-muted);font-family:monospace;">${report.latitude.toFixed(5)}, ${report.longitude.toFixed(5)}</div>` : ''}
+          </td>
           <td class="table-cell cell-conf">${escapeHtml(conf)}</td>
           <td class="table-cell cell-priority"><span class="priority-badge ${getPriorityClass(report.priority_level)}">${escapeHtml((report.priority_level || '—').toUpperCase())}</span></td>
           <td class="table-cell cell-status"><span class="status-badge ${getStatusClass(report.status)}">${escapeHtml((report.status || '—').toUpperCase())}</span></td>
@@ -772,7 +780,14 @@ async function initReportDetails(user) {
     setText('detail-meta-type', report.hazard_type || '—');
     setText('detail-meta-confidence', formatConfidence(report.confidence));
     setText('detail-meta-date', formatDate(report.detected_at) + ' · ' + formatTime(report.detected_at));
-    setText('detail-meta-location', (report.latitude !== undefined && report.longitude !== undefined) ? `${report.latitude.toFixed(6)}, ${report.longitude.toFixed(6)}` : 'Location not provided');
+    const locEl = document.getElementById('detail-meta-location');
+    if (locEl) {
+      if (report.latitude !== undefined && report.longitude !== undefined) {
+        locEl.innerHTML = `<span style="font-family:monospace;font-weight:600;">${report.latitude.toFixed(6)}, ${report.longitude.toFixed(6)}</span> <a href="map.html?lat=${report.latitude}&lng=${report.longitude}" class="btn-text" style="display:inline-flex;align-items:center;margin-left:10px;font-size:12px;font-weight:700;color:var(--primary, #f97316);text-decoration:none;" target="_blank"><span class="material-symbols-outlined" style="font-size:15px;margin-right:2px;">map</span> VIEW ON MAP →</a>`;
+      } else {
+        locEl.textContent = 'Location not provided';
+      }
+    }
 
     // Confidence bar
     const confBar = document.getElementById('detail-conf-bar');
