@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 # Caches and temporary files
+.pytest_cache/
 .ipynb_checkpoints/
 *.swp
 *.swo
@@ -39,3 +40,8 @@ yolo26n.pt
 
 # Allow trained baseline model weights
 !runs/**/weights/best.pt
+
+# Runtime-generated files and local design references
+backend/outputs/
+backend/uploads/
+stitch-reference/

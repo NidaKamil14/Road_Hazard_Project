@@ -1,178 +1,212 @@
-# 🛣️ Road Hazard Detection System (YOLO11)
+# 🛣️ Road Hazard Intelligence System
 
-An intelligent, real-time computer vision system for identifying critical road hazards to enhance road safety, autonomous navigation, and infrastructure maintenance. Built and optimized with **YOLO11** on a multi-source, class-balanced dataset.
+An intelligent, end-to-end computer vision and spatial intelligence platform for automated road hazard detection, risk-aware route recommendation, and municipal infrastructure maintenance. Powered by **YOLO11s (trained at 800×800)**, **FastAPI**, **PostgreSQL + PostGIS**, and **OSRM**.
 
 ---
 
 ## 📌 Project Overview
 
-Road safety and timely road maintenance require robust automated detection of diverse road hazards. This project detects four key hazard categories under diverse weather, lighting, and camera perspectives:
+Road safety, vehicular damage prevention, and municipal repair scheduling require automated detection of critical road hazards. This system integrates deep learning inference with geospatial analytics to detect, prioritize, and safely route around four primary hazard categories:
 
-| Class ID | Hazard Category | Description | Source Dataset |
-| :--- | :--- | :--- | :--- |
-| **0** | **Pothole** | Depressions, cavities, and structural holes in the road surface | RDD2022 |
-| **1** | **Road Crack** | Longitudinal, transverse, and alligator cracks | RDD2022 |
-| **2** | **Waterlogging** | Standing water, puddles, and flooded roadway sections | FloodDET |
-| **3** | **Construction Barrier** | Traffic cones, barrels, and safety work-zone barriers | Roadwork Cones |
-
----
-
-## 📊 Baseline Model Performance (50 Epochs)
-
-The baseline model was trained for **50 epochs** using `yolo11n.pt` with domain-specific augmentations (geometric sanity constraints: 0° vertical flip, restricted perspective distortion to preserve ground-plane perspective).
-
-### **Overall Validation Metrics**
-* **mAP@50**: **61.70%** *(Peak: **61.81%** at Epoch 44)*
-* **mAP@50-95**: **34.93%** *(Peak: **35.89%** at Epoch 44)*
-* **Precision**: **68.56%**
-* **Recall**: **58.72%**
-* **Total Training Time**: ~72.6 minutes on single GPU
-
-### **Key Metrics & Loss Visualizations**
-The full training metrics log is available at [`runs/detect/baseline/results.csv`](runs/detect/baseline/results.csv).
-
-| Metric Curve | Confusion Matrix |
-| :---: | :---: |
-| ![Results Plot](runs/detect/baseline/results.png) | ![Confusion Matrix](runs/detect/baseline/confusion_matrix.png) |
-
-| Precision-Recall Curve | F1-Confidence Curve |
-| :---: | :---: |
-| ![PR Curve](runs/detect/baseline/BoxPR_curve.png) | ![F1 Curve](runs/detect/baseline/BoxF1_curve.png) |
+| Class ID | Hazard Category | Description | Source Dataset | Production Ontology |
+| :---: | :--- | :--- | :--- | :--- |
+| **0** | **Pothole** | Structural cavities, depressions, and surface ruptures | RDD2022 | `pothole` |
+| **1** | **Road Crack** | Longitudinal, transverse, and alligator cracks | RDD2022 | `road_crack` |
+| **2** | **Waterlogging** | Standing water pools, puddles, and roadway flooding | FloodDET | `waterlogging` |
+| **3** | **Construction Barrier** | Traffic cones, safety barrels, and active workzone barriers | Roadwork Cones | `construction_barrier` |
 
 ---
 
-## 🗂️ Dataset Architecture & Engineering
+## 🏗️ End-to-End System Architecture
 
-Combining datasets across disparate domains presents extreme class imbalances and disparate annotation schemas:
-1. **RDD2022**: Multi-country roadway damage dataset (Japan, India, Czech, Norway, US, China). Provides pothole (`D40`) and crack (`D00`, `D10`, `D20`) annotations.
-2. **FloodDET**: COCO-formatted waterlogging and urban flood imagery. Converted to YOLO format with bounding box clamping and identical-image deduplication across splits.
-3. **Roadwork Cones**: Traffic work-zone hazard dataset containing cones, bollards, and construction obstacles.
+```text
+       User Upload (Image)
+               ↓
+    FastAPI Inference Service (Port 5000: POST /detect/image)
+               ↓
+    YOLO11s Experiment 3 Detector (800×800, Tensor Processing on CUDA)
+               ↓
+  Rule-Based Severity Engine (Low / Medium / High)
+               ↓
+  Maintenance Priority Engine (0–100 Score, Low / Medium / High / Critical)
+               ↓
+  PostgreSQL + PostGIS Database (geometry(Point, 4326))
+               ↓
+  Hazard-Aware Routing Engine (OSRM + PostGIS ST_DWithin Proximity Decay)
+               ↓
+  Frontend Dashboard & Interactive Leaflet Map (Port 8000)
+  ├── User Detection Portal (detect.html)
+  ├── Spatial Map & Route Planning (map.html)
+  └── Municipal Authority Portal (index.html, admin-dashboard.html)
+```
 
-### **Class Balancing Strategy**
-* **Crack Subsampling**: RDD2022 contains an overwhelming majority of crack annotations. Crack-only images were stratified and subsampled to **2,250** images while strictly preserving multi-country geographical distributions.
-* **Negative Background Frames**: Included ~1,000 negative/background images (clean roads without hazards) from all three sources to suppress false positive background triggers.
-* **Minority Oversampling**: Applied a 7x dynamic exposure weighting in `train.txt` for rare waterlogging instances and 1.5x for potholes to counter severe frequency disparities.
+---
 
-Detailed dataset analysis and repair logs are documented in [`reports/`](reports/).
+## 📊 Authoritative Model: Experiment 3 (YOLO11s at 800×800)
+
+The production checkpoint is fine-tuned on the merged and class-balanced dataset at **800×800 resolution**:
+
+* **Authoritative Checkpoint:** `runs/detect/experiment3_yolo11s_800/weights/best.pt`
+* **Architecture:** YOLO11s (~9.46M parameters, 21.7 GFLOPs)
+* **Input Resolution:** 800 × 800
+* **Test Evaluation Metrics:**
+  * **mAP@50:** **73.14%**
+  * **mAP@50-95:** **49.62%**
+  * **Precision:** **78.73%**
+  * **Recall:** **68.57%**
+
+### Model Evolution History
+* **Baseline (YOLO11n, 640×640):** mAP@50: 61.70%, mAP@50-95: 34.93%
+* **Experiment 2 (YOLO11s, 800×800):** Initial scale-up validation
+* **Experiment 3 (YOLO11s, 800×800 — Final):** Clean balanced ontology, peak test mAP@50: **73.14%**
+
+Detailed evaluations and training logs are preserved in [`reports/`](reports/).
 
 ---
 
 ## 📁 Repository Structure
 
 ```text
-RoadHazardProject/
-├── configs/
-│   └── data.yaml                   # YOLO dataset configuration
-├── reports/
-│   ├── class_distribution.csv      # Raw vs processed class distribution
-│   ├── class_imbalance_report.txt  # Imbalance analysis & mitigation strategy
-│   ├── dataset_repairs_report.txt  # Bounding box repairs & format alignment
-│   ├── dataset_inspection_report.txt
-│   └── flooddet_processing_report.txt
+Road_Hazards/
+├── backend/
+│   ├── main.py                     # FastAPI application & lifespan loader
+│   ├── database.py                 # SQLAlchemy engine & PostGIS connection
+│   ├── init_db.py                  # Database & PostGIS initialization script
+│   ├── create_admin.py             # Administrator account creation script
+│   ├── models/
+│   │   ├── hazard.py               # PostGIS Point hazard model
+│   │   └── admin.py                # Admin user authentication model
+│   ├── routes/
+│   │   ├── hazards.py              # CRUD & spatial hazard endpoints
+│   │   ├── routing.py              # Hazard-aware route recommendation
+│   │   └── auth.py                 # Session authentication routes
+│   ├── schemas/                    # Pydantic request/response schemas
+│   ├── services/
+│   │   ├── detector.py             # RoadHazardDetector (YOLO11s wrapper)
+│   │   ├── severity.py             # Rule-based Severity Engine
+│   │   ├── priority.py             # Maintenance Priority Scoring Engine
+│   │   ├── routing.py              # OSRM driving service client
+│   │   └── hazard_analyzer.py      # Spatial buffer decay & route penalty
+│   └── tests/                      # Automated test suite (63/63 passing)
+├── frontend/
+│   ├── index.html                  # Access Gateway (Public & Authority portal)
+│   ├── detect.html                 # Public detection & image analysis interface
+│   ├── map.html                    # Leaflet map & hazard-aware routing interface
+│   ├── admin-dashboard.html        # Municipal Authority dashboard & summary
+│   ├── admin-reports.html          # Paginated hazard report queue
+│   ├── admin-report-details.html   # Report detail view & status management
+│   ├── app.js                      # Detection logic & database integration
+│   ├── map.js                      # Spatial rendering & route polyline visualizer
+│   ├── auth.js                     # Session management & gateway logic
+│   ├── admin.js                    # Authority workflows & PATCH status
+│   └── styles.css                  # UI design system & responsive styling
 ├── runs/
 │   └── detect/
-│       └── baseline/               # Baseline model checkpoint & evaluation plots
-│           ├── weights/
-│           │   └── best.pt         # Best trained YOLO11n weights (mAP50: 61.7%)
-│           ├── results.csv         # Per-epoch training/validation metrics
-│           ├── results.png         # Loss and mAP progression plots
-│           ├── confusion_matrix.png
-│           └── BoxPR_curve.png
-├── src/
-│   ├── train.py                    # Configurable YOLO11 training script
-│   ├── evaluate.py                 # Split evaluation with per-class report
-│   ├── predict.py                  # Real-time inference on images/videos/webcam
-│   ├── prepare_dataset.py          # Stratified sampling & oversampling pipeline
-│   ├── process_datasets.py         # RDD2022 & RoadworkCones cleaning
-│   └── process_flooddet.py         # FloodDET COCO conversion & deduplication
-├── .gitignore                      # Excludes ~43GB raw imagery & temporary files
-├── requirements.txt                # Python environment dependencies
-└── README.md                       # Project documentation
+│       └── experiment3_yolo11s_800/# Production model weights & plots
+│           └── weights/best.pt     # Authoritative trained model checkpoint
+├── configs/
+│   └── data.yaml                   # YOLO dataset split & class ontology config
+├── reports/                        # Comprehensive test & evaluation reports
+│   ├── final_end_to_end_testing_report.txt
+│   ├── final_pre_submission_audit_report.txt
+│   └── experiment3_integration_testing_report.txt
+├── requirements.txt                # Root Python dependencies
+└── README.md                       # Master system documentation
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quick Start Guide
 
-### 1. Installation
+### 1. Prerequisites
+- Python 3.10+ (Python 3.11 / 3.14 compatible)
+- PostgreSQL 14+ with PostGIS 3.0+ extension
+- NVIDIA CUDA GPU (optional, auto-detects GPU or CPU)
 
-Clone the repository and install dependencies:
+### 2. Environment Configuration
+Create `backend/.env` based on `backend/.env.example`:
 
+```dotenv
+DATABASE_URL=postgresql+psycopg://postgres:YOUR_PASSWORD@localhost:5432/road_hazard_db
+MODEL_PATH=runs/detect/experiment3_yolo11s_800/weights/best.pt
+OSRM_BASE_URL=https://router.project-osrm.org
+SESSION_SECRET_KEY=your_generated_32_character_secret_key
+SESSION_COOKIE_SECURE=false
+```
+
+### 3. Database Initialization & Admin Setup
 ```bash
-git clone https://github.com/shekhar2503/RoadHazardProject.git
-cd RoadHazardProject
+# Initialize PostGIS extension and create database tables
+python backend/init_db.py
 
-# Create and activate a virtual environment (optional)
-python -m venv venv
-# On Windows:
-venv\Scripts\activate
-# On Linux/macOS:
-source venv/bin/activate
-
-# Install requirements
-pip install -r requirements.txt
+# Create a municipal administrator account
+python backend/create_admin.py --username admin
 ```
 
----
-
-### 2. Running Inference (Prediction)
-
-Use the trained baseline model ([`runs/detect/baseline/weights/best.pt`](runs/detect/baseline/weights/best.pt)) to detect hazards on an image, video file, folder, or webcam:
-
+### 4. Running the Backend (Port 5000)
 ```bash
-# Run on a single image
-python src/predict.py --weights runs/detect/baseline/weights/best.pt --source path/to/image.jpg
-
-# Run on a video
-python src/predict.py --weights runs/detect/baseline/weights/best.pt --source path/to/road_video.mp4
-
-# Run on live webcam
-python src/predict.py --weights runs/detect/baseline/weights/best.pt --source 0
+uvicorn backend.main:app --host 127.0.0.1 --port 5000 --reload
 ```
+- API Health Check: [http://127.0.0.1:5000/health](http://127.0.0.1:5000/health)
+- Swagger Documentation: [http://127.0.0.1:5000/docs](http://127.0.0.1:5000/docs)
 
----
-
-### 3. Evaluating the Model
-
-Evaluate the trained checkpoint on the validation or test split:
-
+### 5. Running the Frontend (Port 8000)
 ```bash
-# Evaluate on test split
-python src/evaluate.py --weights runs/detect/baseline/weights/best.pt --split test
-
-# Evaluate on validation split
-python src/evaluate.py --weights runs/detect/baseline/weights/best.pt --split val
-
-# Evaluate on both splits
-python src/evaluate.py --weights runs/detect/baseline/weights/best.pt --split both
+python -m http.server 8000 --directory frontend
 ```
+- User Detection Portal: [http://127.0.0.1:8000/detect.html](http://127.0.0.1:8000/detect.html)
+- Interactive Map & Routing: [http://127.0.0.1:8000/map.html](http://127.0.0.1:8000/map.html)
+- Access Gateway / Authority: [http://127.0.0.1:8000/index.html](http://127.0.0.1:8000/index.html)
 
 ---
 
-### 4. Training
+## 🧪 Automated Test Suite
 
-To train the model from scratch or fine-tune:
-
+Run the full automated test suite:
 ```bash
-python src/train.py \
-  --data configs/data.yaml \
-  --model yolo11n.pt \
-  --epochs 50 \
-  --batch 32 \
-  --imgsz 640 \
-  --project runs/detect \
-  --name custom_run
+pytest backend/tests/ -v
+```
+
+**Verification Results:**
+- **Unit Tests:** 46 / 46 PASSED
+- **Integration Tests:** 17 / 17 PASSED
+- **Total:** **63 / 63 PASSED (100% Success Rate)**
+
+To execute the live end-to-end system flow test:
+```bash
+python backend/tests/test_e2e_flow.py
 ```
 
 ---
 
-## 🛠️ Tech Stack
-* **Model**: [Ultralytics YOLO11](https://github.com/ultralytics/ultralytics)
-* **Framework**: PyTorch & Torchvision
-* **Image & Data Processing**: OpenCV, NumPy, Pandas, Pillow, PyYAML
-* **Visualization**: Matplotlib, Seaborn
+## 📜 Key Backend API Contracts
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/health` | Model status, compute device, class list, and DB connection |
+| `POST` | `/detect/image` | YOLO11s image inference at 800×800 with bounding boxes & confidence |
+| `POST` | `/hazards` | Persist detected hazard with PostGIS geometry, severity, and priority |
+| `GET` | `/hazards` | List active/resolved hazards with spatial bounding and pagination |
+| `GET` | `/hazards/priority` | Dedicated municipal repair queue sorted by priority score |
+| `PATCH` | `/hazards/{id}/status` | Update workflow lifecycle status (`active` / `resolved`) |
+| `DELETE` | `/hazards/{id}` | Remove hazard record |
+| `POST` | `/route/recommend` | OSRM candidate routes evaluated against PostGIS hazard buffer |
+| `POST` | `/api/auth/login` | Municipal authority session authentication |
+| `GET` | `/api/auth/session` | Validate active authority session |
+| `POST` | `/api/auth/logout` | Terminate session and clear cookie |
+
+---
+
+## 🛠️ Technology Stack
+* **AI & Computer Vision:** Ultralytics YOLO11s, PyTorch, OpenCV, CUDA
+* **API Backend:** FastAPI, Starlette Session Middleware, Uvicorn, Pydantic v2
+* **Geospatial Database:** PostgreSQL, PostGIS, SQLAlchemy 2.0, GeoAlchemy2, psycopg v3
+* **Routing Engine:** Open Source Routing Machine (OSRM) driving API
+* **Security & Auth:** Argon2 password hashing (pwdlib), HTTP-only cookies
+* **Frontend Web App:** Semantic HTML5, Vanilla JavaScript, Leaflet.js, CSS Design Tokens
+* **Testing:** Pytest, HTTPX, FastAPI TestClient
 
 ---
 
 ## 📜 License
-This project is open-sourced under the MIT License for educational as well as research purposes.
+This project is open-sourced under the MIT License for educational and research purposes.

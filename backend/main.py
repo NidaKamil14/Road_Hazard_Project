@@ -9,6 +9,8 @@ from fastapi.staticfiles import StaticFiles
 from backend.database import check_db_status
 from backend.routes.hazards import router as hazards_router
 from backend.routes.routing import router as routing_router
+from backend.routes.auth import router as auth_router
+from starlette.middleware.sessions import SessionMiddleware
 from backend.schemas.detection import DetectionResponse, HealthResponse
 from backend.services.detector import RoadHazardDetector
 
@@ -73,10 +75,16 @@ app = FastAPI(
 ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://localhost:5000",
+    "http://127.0.0.1:5000",
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "http://localhost:8001",
+    "http://127.0.0.1:8001",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
 ]
 
 app.add_middleware(
@@ -87,6 +95,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Validate SESSION_SECRET_KEY
+SESSION_SECRET_KEY = os.environ.get("SESSION_SECRET_KEY")
+if not SESSION_SECRET_KEY or len(SESSION_SECRET_KEY) < 32:
+    raise RuntimeError("SESSION_SECRET_KEY environment variable is not set or is shorter than 32 characters. A long random string is required for session security.")
+
+SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "false").lower() == "true"
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=SESSION_SECRET_KEY,
+    session_cookie="road_hazard_admin_session",
+    max_age=8 * 3600,
+    same_site="lax",
+    https_only=SESSION_COOKIE_SECURE,
+)
+
 # Mount outputs directory for static serving of annotated images
 app.mount("/outputs", StaticFiles(directory=OUTPUTS_DIR), name="outputs")
 
@@ -95,6 +119,9 @@ app.include_router(hazards_router, prefix="/hazards")
 
 # Register Hazard-aware routing recommendation routes
 app.include_router(routing_router, prefix="/route")
+
+# Register Authentication routes
+app.include_router(auth_router, prefix="/api")
 
 
 @app.get("/", tags=["General"])
@@ -218,5 +245,5 @@ async def detect_image(
 
 if __name__ == "__main__":
     import uvicorn
-
-    uvicorn.run("backend.main:app", host="127.0.0.1", port=8000, reload=True)
+    port = int(os.environ.get("PORT", 5000))
+    uvicorn.run("backend.main:app", host="127.0.0.1", port=port, reload=True)

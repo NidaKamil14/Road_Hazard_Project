@@ -14,7 +14,8 @@ if str(ROOT_DIR) not in sys.path:
 
 from sqlalchemy import create_engine, text
 from backend.database import engine, Base, DATABASE_URL
-from backend.models.hazard import Hazard  # Ensures model is registered with Base.metadata
+from backend.models.hazard import Hazard
+from backend.models.admin import Admin
 
 
 def init_database():
