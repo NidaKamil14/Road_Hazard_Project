@@ -34,6 +34,13 @@
   box-shadow: var(--shadow-md, 3px 3px 0px #171717);
   overflow: hidden;
   background-color: var(--bg-color, #F5F3EE);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.map-container-wrapper:hover,
+.map-container-wrapper:focus-within {
+  transform: translateY(-2px);
+  box-shadow: 5px 5px 0px #171717;
 }
 
 .map-container {
@@ -281,10 +288,32 @@
   align-items: center;
   gap: 0.5rem;
   border-radius: var(--radius-sm, 0.125rem);
+  transition: background 0.2s ease, background-color 0.2s ease, color 0.2s ease;
 }
 
 .btn-outline:hover {
   background: var(--border-light, #e4e2dd);
+}
+
+/* Consistent button hover effect matching Clear Route Points */
+#btn-use-location,
+#btn-select-destination,
+#btn-find-route,
+#btn-clear-route,
+#refresh-hazards-btn,
+#retry-hazards-btn {
+  transition: background 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+#btn-use-location:hover:not(:disabled),
+#btn-select-destination:hover:not(:disabled),
+#btn-find-route:hover:not(:disabled),
+#btn-clear-route:hover:not(:disabled),
+#refresh-hazards-btn:hover:not(:disabled),
+#retry-hazards-btn:hover:not(:disabled) {
+  background: var(--border-light, #e4e2dd);
+  background-color: var(--border-light, #e4e2dd);
+  color: var(--text-dark, #171717);
 }
 
 /* Route Results Panel */

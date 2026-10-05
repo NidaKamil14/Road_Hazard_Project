@@ -39,6 +39,16 @@
       box-shadow: var(--shadow-xl);
     }
 
+    /* Problem Section Hover */
+    .problem-card {
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+      cursor: default;
+    }
+    .problem-card:hover {
+      background-color: #FAF4EB !important;
+      border-color: var(--accent-orange) !important;
+    }
+
     /* Interactive Pipeline Flow */
     .flow-card {
       transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-color 0.3s ease;
@@ -146,7 +156,7 @@
       <!-- The Problem -> Solution Flow -->
       <!-- The Problem -->
       <section style="margin-bottom: 0;">
-         <div class="workspace-card" style="background-color: transparent; border: 2px dashed var(--border-color); box-shadow: none;">
+         <div class="workspace-card problem-card" style="background-color: transparent; border: 2px dashed var(--border-color); box-shadow: none;">
            <div class="wayfinding">
              <span class="indicator-dot orange pulse-indicator"></span>
              <span class="section-label">THE PROBLEM</span>

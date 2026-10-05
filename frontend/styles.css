@@ -362,11 +362,12 @@ body {
   justify-content: center;
   min-height: 380px;
   cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .drop-zone:hover {
-  background-color: var(--bg-color-hover);
+  background-color: #FAF4EB;
+  border-color: var(--accent-orange);
 }
 
 .drop-zone.drag-over {
@@ -433,6 +434,18 @@ body {
 
 .btn-primary:hover {
   background-color: var(--accent-orange-hover);
+}
+
+.btn-choose,
+#btn-detect-action {
+  transition: background 0.2s ease, background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-choose:hover:not(:disabled),
+#btn-detect-action:hover:not(:disabled) {
+  background: var(--border-light, #e4e2dd);
+  background-color: var(--border-light, #e4e2dd);
+  color: var(--text-dark, #171717);
 }
 
 .btn-primary:active {
@@ -1101,12 +1114,14 @@ body {
 }
 
 .hazard-category {
+  position: relative;
   padding: var(--space-md);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  transition: background-color 0.2s;
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), background-color 0.2s ease, box-shadow 0.2s ease;
   border-bottom: 1px solid var(--border-color);
+  will-change: transform;
 }
 
 @media (min-width: 640px) {
@@ -1125,7 +1140,10 @@ body {
 }
 
 .hazard-category:hover {
-  background-color: var(--bg-color);
+  transform: scale(1.015);
+  background-color: #FAF4EB;
+  z-index: 2;
+  box-shadow: var(--shadow-sm);
 }
 
 .hazard-title-row {
@@ -1776,12 +1794,13 @@ body {
 /* Admin Header Extensions */
 .admin-nav {
   display: none;
-  gap: var(--space-xs);
+  gap: 2.5rem;
 }
 
 @media (min-width: 768px) {
   .admin-nav {
     display: flex;
+    gap: 2.5rem;
   }
 }
 
@@ -1938,6 +1957,7 @@ body {
 }
 
 .summary-card {
+  position: relative;
   background-color: #fff;
   border: 1px solid var(--border-color);
   padding: var(--space-lg);
@@ -1945,6 +1965,13 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s ease;
+  will-change: transform;
+}
+
+.summary-card:hover {
+  transform: scale(1.02);
+  z-index: 2;
 }
 
 .summary-card-header {
@@ -2097,11 +2124,13 @@ body {
 .table-cell:last-child { border-right: none; }
 
 .table-row-hover {
-  transition: background-color 0.15s;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
 }
 
-.table-row-hover:hover {
-  background-color: var(--bg-color);
+.table-row-hover:hover,
+.admin-table tbody tr.table-row-hover:hover td {
+  background-color: #FEF3C7;
 }
 
 .table-row-hover + .table-row-hover {
